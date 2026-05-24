@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/jg/**)",
+      "mcp__supabase__apply_migration",
+      "Bash(npx tsc:*)",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__deploy_edge_function"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
+}
