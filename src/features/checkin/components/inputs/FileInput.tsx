@@ -63,22 +63,34 @@ export function FileInput({ files, multiple, accept, db, userId, date, taskId, o
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
         {files.map(f => (
-          <div
-            key={f.url}
-            className="flex items-center gap-1 bg-muted rounded px-2 py-1 text-xs max-w-[200px]"
-          >
-            {f.type.startsWith('image/') ? (
-              <img src={f.url} alt={f.name} className="h-6 w-6 object-cover rounded" />
-            ) : (
+          f.type.startsWith('image/') ? (
+            <div key={f.url} className="relative group">
+              <img
+                src={f.url}
+                alt={f.name}
+                className="h-24 w-24 object-cover rounded-lg border"
+              />
+              {!disabled && (
+                <button
+                  onClick={() => removeFile(f.url)}
+                  className="absolute top-1 right-1 bg-black/60 rounded-full p-0.5 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Remove"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <div key={f.url} className="flex items-center gap-1 bg-muted rounded px-2 py-1 text-xs max-w-[200px]">
               <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            )}
-            <span className="truncate">{f.name}</span>
-            {!disabled && (
-              <button onClick={() => removeFile(f.url)} className="shrink-0 hover:text-destructive" aria-label="Remove">
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </div>
+              <span className="truncate">{f.name}</span>
+              {!disabled && (
+                <button onClick={() => removeFile(f.url)} className="shrink-0 hover:text-destructive" aria-label="Remove">
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          )
         ))}
       </div>
 

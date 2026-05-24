@@ -12,7 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Spinner } from '@/components/ui/spinner'
 import { Separator } from '@/components/ui/separator'
 
-const GOALS = ['Weight loss', 'Maintenance', 'Muscle gain']
+const GOALS = [
+  { value: 'lose_0.25', label: 'Lose 0.25 kg/week (mild deficit)' },
+  { value: 'lose_0.5',  label: 'Lose 0.5 kg/week (moderate deficit)' },
+  { value: 'lose_0.75', label: 'Lose 0.75 kg/week (aggressive deficit)' },
+  { value: 'maintain',  label: 'Maintain weight' },
+  { value: 'gain_0.25', label: 'Gain 0.25 kg/week (lean bulk)' },
+  { value: 'gain_0.5',  label: 'Gain 0.5 kg/week (bulk)' },
+]
 const PREFS = ['Vegetarian', 'Non-Vegetarian', 'Eggetarian', 'Vegan', 'Jain']
 const ACTIVITY_LEVELS = [
   { value: 'sedentary', label: 'Sedentary (desk job, little exercise)' },
@@ -108,7 +115,7 @@ export default function NutritionSettingsPage() {
               <Label>Goal</Label>
               <Select value={goal} onValueChange={setGoal}>
                 <SelectTrigger><SelectValue placeholder="Select goal…" /></SelectTrigger>
-                <SelectContent>{GOALS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
+                <SelectContent>{GOALS.map(g => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
@@ -143,7 +150,7 @@ export default function NutritionSettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="height">Height (cm)</Label>
-                <Input id="height" type="number" min="100" value={height} onChange={e => setHeight(e.target.value)} placeholder="cm" />
+                <Input id="height" type="number" min="100" max="250" value={height} onChange={e => setHeight(e.target.value)} placeholder="cm" />
               </div>
             </div>
             <div className="space-y-2">
@@ -163,7 +170,7 @@ export default function NutritionSettingsPage() {
                     <p className="text-xl font-semibold">{tdeePreview.tdee} kcal</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Daily goal ({goal || 'Maintenance'})</p>
+                    <p className="text-muted-foreground">Daily goal ({GOALS.find(g => g.value === goal)?.label ?? 'Maintain weight'})</p>
                     <p className="text-xl font-semibold">{tdeePreview.kcalGoal} kcal</p>
                   </div>
                 </div>

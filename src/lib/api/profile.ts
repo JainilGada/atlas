@@ -45,7 +45,15 @@ function calcTDEE(p: Pick<UserProfile, 'age' | 'weight_kg' | 'height_cm' | 'acti
 }
 
 export function goalKcal(tdee: number, goal: string | null): number {
+  // New granular goals
+  if (goal === 'lose_0.25') return Math.max(1200, tdee - 250)
+  if (goal === 'lose_0.5')  return Math.max(1200, tdee - 500)
+  if (goal === 'lose_0.75') return Math.max(1200, tdee - 750)
+  if (goal === 'maintain')  return tdee
+  if (goal === 'gain_0.25') return tdee + 250
+  if (goal === 'gain_0.5')  return tdee + 500
+  // Legacy values
   if (goal === 'Weight loss') return Math.max(1200, tdee - 500)
   if (goal === 'Muscle gain') return tdee + 300
-  return tdee // Maintenance
+  return tdee
 }

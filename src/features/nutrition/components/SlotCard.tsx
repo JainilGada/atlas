@@ -47,8 +47,9 @@ export function SlotCard({ slot, items, dayLogId, userId, date, db, profile, onI
     onItemsChange(slot, [...others, ...updated])
   }
 
-  async function estimate(itemId: string, item?: FoodItem) {
-    const target = item ?? items.find(f => f.id === itemId)
+  // currentItems: pass explicitly to avoid stale closure when called right after a state update
+  async function estimate(itemId: string, item?: FoodItem, currentItems: FoodItem[] = items) {
+    const target = item ?? currentItems.find(f => f.id === itemId)
     if (!target) return
     setEstimating(prev => new Set(prev).add(itemId))
     try {
@@ -61,7 +62,7 @@ export function SlotCard({ slot, items, dayLogId, userId, date, db, profile, onI
       if (error) throw error
       const kcal = (data as { kcal: number }).kcal
       await updateFoodItem(db, itemId, { kcal, kcal_source: 'ai_estimated' })
-      update(items.map(f => f.id === itemId ? { ...f, kcal, kcal_source: 'ai_estimated' } : f))
+      update(currentItems.map(f => f.id === itemId ? { ...f, kcal, kcal_source: 'ai_estimated' } : f))
     } catch (e) {
       console.error('AI estimate failed', e)
     } finally {
@@ -87,8 +88,8 @@ export function SlotCard({ slot, items, dayLogId, userId, date, db, profile, onI
       setAddName('')
       setAddQty('')
       setShowAdd(false)
-      // Trigger AI estimate immediately
-      estimate(newItem.id, newItem)
+      // Pass updated items so estimate doesn't use stale closure
+      estimate(newItem.id, newItem, updated)
     } finally {
       setAdding(false)
     }
@@ -123,7 +124,7 @@ export function SlotCard({ slot, items, dayLogId, userId, date, db, profile, onI
     })
     const updated = [...items, newItem]
     update(updated)
-    estimate(newItem.id, newItem)
+    estimate(newItem.id, newItem, updated)
   }
 
   return (
