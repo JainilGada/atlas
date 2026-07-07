@@ -4,7 +4,6 @@ import { useSession } from '@/features/auth/SessionContext'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { OfflineBanner } from '@/components/ui/offline-banner'
 import { OfflineSync } from './OfflineSync'
-import { cn } from '@/lib/utils'
 
 const navItems = [
   { to: '/checkin', label: 'Today', icon: CalendarCheck },
@@ -33,11 +32,16 @@ export function AppLayout() {
       </a>
 
       {/* Top bar */}
-      <header className="sticky top-0 z-10 flex items-center justify-between px-4 h-12 border-b bg-background/95 backdrop-blur">
-        <span className="font-semibold text-sm tracking-wide">Atlas</span>
+      <header className="sticky top-0 z-10 flex items-center justify-between px-4 h-14 border-b bg-white/95 backdrop-blur shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-sm">
+            <span className="text-primary-foreground font-bold text-xs tracking-tight">A</span>
+          </div>
+          <span className="font-semibold text-[15px] text-foreground">Atlas</span>
+        </div>
         <button
           onClick={handleLogout}
-          className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="w-9 h-9 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Log out"
         >
           <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -56,21 +60,24 @@ export function AppLayout() {
       </main>
 
       {/* Bottom nav */}
-      <nav aria-label="Main navigation" className="fixed bottom-0 inset-x-0 h-16 border-t bg-background/95 backdrop-blur z-10">
+      <nav aria-label="Main navigation" className="fixed bottom-0 inset-x-0 h-16 border-t bg-white/95 backdrop-blur z-10 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
         <div className="flex h-full">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                cn(
-                  'flex-1 flex flex-col items-center justify-center gap-0.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
-                  isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
-                )
+                `flex-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
+                  isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                }`
               }
             >
-              <Icon className="h-5 w-5" aria-hidden="true" />
-              <span>{label}</span>
+              {({ isActive }) => (
+                <>
+                  <Icon className="h-5 w-5" strokeWidth={isActive ? 2 : 1.5} aria-hidden="true" />
+                  <span>{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </div>

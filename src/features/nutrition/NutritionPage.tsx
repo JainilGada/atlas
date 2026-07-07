@@ -98,26 +98,26 @@ export default function NutritionPage() {
   const activeSlots = showLateNight ? [...SLOTS, 'late_night' as MealSlot] : SLOTS
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+    <div className="max-w-lg mx-auto px-4 pt-5 pb-6 space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Nutrition</h1>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-foreground">Nutrition</p>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
             <Link to="/settings/nutrition" aria-label="Nutrition settings">
               <Settings className="h-4 w-4" />
             </Link>
           </Button>
-          <div className="flex items-center gap-1.5">
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+          <label className="flex items-center gap-1.5 text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+            <CalendarDays className="h-4 w-4 shrink-0" />
             <input
               type="date"
               value={date}
               max={todayStr()}
               onChange={e => setDate(e.target.value)}
-              className="text-sm border rounded-md px-2 py-1 bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              className="text-xs border border-border rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
             />
-          </div>
+          </label>
         </div>
       </div>
 

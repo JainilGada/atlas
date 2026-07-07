@@ -1,11 +1,8 @@
 import { useState, useRef, type FormEvent } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useSession } from './SessionContext'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 
 type Step = 'email' | 'otp'
@@ -28,10 +25,7 @@ export default function LoginPage() {
     setCooldown(60)
     cooldownRef.current = setInterval(() => {
       setCooldown(prev => {
-        if (prev <= 1) {
-          clearInterval(cooldownRef.current!)
-          return 0
-        }
+        if (prev <= 1) { clearInterval(cooldownRef.current!); return 0 }
         return prev - 1
       })
     }, 1000)
@@ -92,67 +86,103 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Atlas</CardTitle>
-          <CardDescription>
-            {step === 'email'
-              ? 'Enter your Gmail address to receive a login code'
-              : `Code sent to ${email}`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {step === 'email' ? (
-            <form onSubmit={handleEmailSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Gmail address</Label>
-                <Input
-                  id="email"
+    <div
+      className="flex min-h-screen items-center justify-center p-6"
+      style={{ background: 'linear-gradient(135deg, #EDE9FF 0%, #F7F7FB 50%, #E0E7FF 100%)' }}
+    >
+      <div className="w-full max-w-sm">
+        {step === 'email' ? (
+          <div>
+            <div className="mb-10">
+              <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mb-7 shadow-lg">
+                <span className="text-primary-foreground font-bold text-2xl">A</span>
+              </div>
+              <h1 className="text-[26px] font-bold text-foreground mb-2 leading-tight">
+                Welcome to Atlas
+              </h1>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Sign in with your Gmail to start building better habits.
+              </p>
+            </div>
+
+            <form onSubmit={handleEmailSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Email address</label>
+                <input
                   type="email"
-                  placeholder="you@gmail.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
+                  placeholder="you@gmail.com"
+                  autoFocus
                   autoComplete="email"
                   required
                   pattern=".*@gmail\.com$"
                   title="Only @gmail.com addresses are supported"
                   disabled={loading}
+                  className="bg-white border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-150 min-h-[44px]"
                 />
               </div>
+
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? <Spinner className="mr-2 h-4 w-4" /> : null}
-                Send login code
-              </Button>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 min-h-[44px]"
+              >
+                {loading ? <Spinner className="h-4 w-4" /> : <>Send OTP <ArrowRight className="h-4 w-4" /></>}
+              </button>
             </form>
-          ) : (
-            <form onSubmit={handleOtpSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="otp">6-digit code</Label>
-                <Input
-                  id="otp"
+
+            <p className="mt-5 text-xs text-muted-foreground text-center leading-relaxed">
+              We'll send a 6-digit code to your inbox. No password needed.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <div className="mb-10">
+              <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mb-7 shadow-lg">
+                <span className="text-primary-foreground font-bold text-2xl">A</span>
+              </div>
+              <h1 className="text-[26px] font-bold text-foreground mb-2 leading-tight">Check your inbox</h1>
+              <p className="text-muted-foreground text-sm">
+                We sent a 6-digit code to{' '}
+                <span className="font-semibold text-foreground">{email}</span>
+              </p>
+            </div>
+
+            <form onSubmit={handleOtpSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground">6-digit code</label>
+                <input
                   type="text"
                   inputMode="numeric"
-                  placeholder="123456"
                   value={otp}
                   onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="123456"
                   maxLength={6}
                   autoComplete="one-time-code"
+                  autoFocus
                   required
                   disabled={loading}
-                  className="text-center text-2xl tracking-widest"
+                  className="bg-white border border-border rounded-xl px-3 py-2.5 text-center text-2xl tracking-widest text-foreground placeholder-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-150 min-h-[56px]"
                 />
               </div>
+
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full" disabled={loading || otp.length < 6}>
-                {loading ? <Spinner className="mr-2 h-4 w-4" /> : null}
-                Verify code
-              </Button>
-              <div className="flex items-center justify-between text-sm">
+
+              <button
+                type="submit"
+                disabled={loading || otp.length < 6}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 min-h-[44px]"
+              >
+                {loading ? <Spinner className="h-4 w-4" /> : 'Verify code'}
+              </button>
+
+              <div className="flex items-center justify-between text-sm pt-1">
                 <button
                   type="button"
-                  className="text-muted-foreground hover:text-foreground disabled:opacity-40"
+                  className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
                   onClick={() => { setStep('email'); setOtp(''); setError(null) }}
                   disabled={loading}
                 >
@@ -160,7 +190,7 @@ export default function LoginPage() {
                 </button>
                 <button
                   type="button"
-                  className="text-muted-foreground hover:text-foreground disabled:opacity-40"
+                  className="text-primary font-medium hover:opacity-80 transition-opacity disabled:opacity-40"
                   onClick={handleResend}
                   disabled={loading || cooldown > 0}
                 >
@@ -168,9 +198,9 @@ export default function LoginPage() {
                 </button>
               </div>
             </form>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

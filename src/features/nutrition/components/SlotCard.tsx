@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react'
 import { Plus, ChevronDown, ChevronUp } from 'lucide-react'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
@@ -128,24 +127,32 @@ export function SlotCard({ slot, items, dayLogId, userId, date, db, profile, onI
   }
 
   return (
-    <Card>
-      <CardHeader className="px-4 py-3">
-        <button
-          className="flex items-center justify-between w-full"
-          onClick={() => setCollapsed(c => !c)}
-        >
-          <span className="font-medium text-sm">{SLOT_LABELS[slot]}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{totalKcal} kcal</span>
-            {collapsed ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronUp className="h-4 w-4 text-muted-foreground" />}
-          </div>
-        </button>
-      </CardHeader>
+    <div
+      className="bg-white rounded-xl overflow-hidden"
+      style={{ border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
+    >
+      {/* Header */}
+      <button
+        className="flex items-center justify-between w-full px-4 py-3"
+        onClick={() => setCollapsed(c => !c)}
+      >
+        <span className="font-semibold text-sm text-foreground">{SLOT_LABELS[slot]}</span>
+        <div className="flex items-center gap-2">
+          {totalKcal > 0 && (
+            <span className="text-xs font-medium text-primary bg-secondary px-2 py-0.5 rounded-full">
+              {totalKcal} kcal
+            </span>
+          )}
+          {collapsed
+            ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            : <ChevronUp className="h-4 w-4 text-muted-foreground" />}
+        </div>
+      </button>
 
       {!collapsed && (
-        <CardContent className="p-0">
+        <>
           {tree.length > 0 && (
-            <div className="border-t divide-y">
+            <div className="border-t divide-y divide-[#F3F4F6]">
               {tree.map(node => (
                 <FoodNode
                   key={node.id}
@@ -166,7 +173,7 @@ export function SlotCard({ slot, items, dayLogId, userId, date, db, profile, onI
             </div>
           )}
 
-          <div className="px-3 py-2 border-t">
+          <div className="px-3 py-2 border-t border-[#F3F4F6]">
             {showAdd ? (
               <form onSubmit={handleAdd} className="flex gap-2 items-center">
                 <Input
@@ -194,14 +201,14 @@ export function SlotCard({ slot, items, dayLogId, userId, date, db, profile, onI
             ) : (
               <button
                 onClick={() => setShowAdd(true)}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:opacity-80 transition-opacity py-1"
               >
-                <Plus className="h-3.5 w-3.5" /> Add item
+                <Plus className="h-3.5 w-3.5" /> Add food
               </button>
             )}
           </div>
-        </CardContent>
+        </>
       )}
-    </Card>
+    </div>
   )
 }
