@@ -142,7 +142,9 @@ export default function ChallengeSetupPage() {
         </Link>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">{challenge.name}</p>
-          <p className="text-xs text-muted-foreground">Set up daily tasks</p>
+          <p className="text-xs text-muted-foreground">
+            {flatTasks.length > 0 ? `${flatTasks.length} task${flatTasks.length !== 1 ? 's' : ''}` : 'Set up daily tasks'}
+          </p>
         </div>
       </div>
 

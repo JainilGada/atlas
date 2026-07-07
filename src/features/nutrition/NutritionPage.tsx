@@ -102,20 +102,23 @@ export default function NutritionPage() {
   return (
     <div className="max-w-lg mx-auto px-4 pt-5 pb-6 space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-foreground">Nutrition</p>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1.5 text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
-            <CalendarDays className="h-4 w-4 shrink-0" />
-            <input
-              type="date"
-              value={date}
-              max={todayStr()}
-              onChange={e => setDate(e.target.value)}
-              className="text-xs border border-border rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
-            />
-          </label>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
+          </p>
+          <p className="text-sm font-semibold text-foreground">Nutrition</p>
         </div>
+        <label className="flex items-center gap-1.5 text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+          <CalendarDays className="h-4 w-4 shrink-0" />
+          <input
+            type="date"
+            value={date}
+            max={todayStr()}
+            onChange={e => setDate(e.target.value)}
+            className="text-xs border border-border rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all cursor-pointer"
+          />
+        </label>
       </div>
 
       {/* Daily summary */}
