@@ -1,11 +1,5 @@
 import { useState, useRef } from 'react'
 import { ChevronDown, ChevronRight, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
 import { OUTPUT_TYPE_LABELS, type OutputType, type TaskNode } from '@/lib/types'
 
 interface TaskBuilderNodeProps {
@@ -43,13 +37,13 @@ export function TaskBuilderNode({
     }
   }
 
-  const indent = node.depth * 20
+  const indent = node.depth * 16
 
   return (
     <div>
       <div
-        className="group flex items-center gap-2 py-2 px-2 rounded-md hover:bg-muted/50 transition-colors"
-        style={{ paddingLeft: `${indent + 8}px` }}
+        className="group flex items-center gap-2 py-2.5 px-3 hover:bg-[#F9FAFB] transition-colors"
+        style={{ paddingLeft: `${indent + 12}px` }}
       >
         {/* Expand/collapse children */}
         <button
@@ -65,71 +59,70 @@ export function TaskBuilderNode({
         </button>
 
         {/* Title */}
-        <Input
+        <input
           value={title}
           onChange={e => setTitle(e.target.value)}
           onBlur={handleTitleBlur}
-          className="h-7 text-sm flex-1 min-w-0 border-transparent shadow-none focus-visible:border-input focus-visible:shadow-sm px-1"
+          className="flex-1 min-w-0 text-sm text-foreground bg-transparent border-0 outline-none placeholder:text-muted-foreground focus:bg-white focus:border focus:border-primary/30 focus:rounded-lg focus:px-2 transition-all py-0.5"
           placeholder="Task title"
         />
 
         {/* Output type */}
-        <Select
+        <select
           value={node.output_type}
-          onValueChange={v => onUpdate(node.id, 'output_type', v)}
+          onChange={e => onUpdate(node.id, 'output_type', e.target.value)}
+          className="text-xs text-foreground bg-[#F3F4F6] border-0 rounded-lg px-2 py-1 shrink-0 focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer"
         >
-          <SelectTrigger className="h-7 text-xs w-36 shrink-0">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {(Object.entries(OUTPUT_TYPE_LABELS) as [OutputType, string][]).map(([v, l]) => (
-              <SelectItem key={v} value={v} className="text-xs">{l}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {(Object.entries(OUTPUT_TYPE_LABELS) as [OutputType, string][]).map(([v, l]) => (
+            <option key={v} value={v}>{l}</option>
+          ))}
+        </select>
 
         {/* Required toggle */}
-        <div className="flex items-center gap-1 shrink-0">
-          <span className="text-xs text-muted-foreground hidden sm:inline">Req</span>
-          <Switch
-            checked={node.required}
-            onCheckedChange={v => onUpdate(node.id, 'required', v)}
-            className="h-4 w-7 data-[state=checked]:bg-primary"
-          />
-        </div>
+        <button
+          onClick={() => onUpdate(node.id, 'required', !node.required)}
+          className={`shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full transition-all ${
+            node.required
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-[#F3F4F6] text-muted-foreground hover:bg-secondary hover:text-primary'
+          }`}
+          title="Toggle required"
+        >
+          Req
+        </button>
 
-        {/* Actions — always visible on touch (no hover), reveal on hover on pointer devices */}
-        <div className="flex items-center gap-0.5 [@media(hover:none)]:opacity-100 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          <Button
-            variant="ghost" size="icon" className="h-6 w-6"
+        {/* Actions */}
+        <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
+          <button
             onClick={() => onMoveUp(node, siblings)}
             disabled={isFirst}
+            className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-all"
             aria-label="Move up"
           >
             <ArrowUp className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost" size="icon" className="h-6 w-6"
+          </button>
+          <button
             onClick={() => onMoveDown(node, siblings)}
             disabled={isLast}
+            className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-all"
             aria-label="Move down"
           >
             <ArrowDown className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost" size="icon" className="h-6 w-6"
+          </button>
+          <button
             onClick={() => onAddChild(node.id, node.depth, node.children.length)}
+            className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-primary hover:bg-secondary transition-all"
             aria-label="Add subtask"
           >
             <Plus className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive"
+          </button>
+          <button
             onClick={() => { if (confirm('Delete this task and all its subtasks?')) onDelete(node.id) }}
+            className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
             aria-label="Delete"
           >
             <Trash2 className="h-3 w-3" />
-          </Button>
+          </button>
         </div>
       </div>
 

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Textarea } from '@/components/ui/textarea'
 
 interface LongTextInputProps {
   value: string | null
@@ -11,14 +10,14 @@ export function LongTextInput({ value, onBlurSave, disabled }: LongTextInputProp
   const [local, setLocal] = useState(value ?? '')
 
   return (
-    <Textarea
+    <textarea
       value={local}
       onChange={e => setLocal(e.target.value)}
       onBlur={() => onBlurSave(local)}
       disabled={disabled}
       rows={3}
       placeholder="Write here…"
-      className="text-sm resize-none"
+      className="w-full text-sm text-foreground bg-white border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground disabled:opacity-50 resize-none"
     />
   )
 }

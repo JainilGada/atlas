@@ -7,7 +7,6 @@ import {
   listTasks, createTask, updateTask, softDeleteTask, swapTaskOrder, buildTree,
 } from '@/lib/api/tasks'
 import type { Challenge, Task, TaskNode as TN } from '@/lib/types'
-import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { TaskBuilderNode } from './components/TaskBuilderNode'
 
@@ -51,7 +50,6 @@ export default function ChallengeSetupPage() {
 
   const handleDelete = useCallback(
     async (taskId: string) => {
-      // Soft-delete the node and all its descendants
       const allDescendants = getDescendants(taskId, flatTasks)
       await Promise.all(
         [taskId, ...allDescendants].map(tid => softDeleteTask(session.db, tid, session.userId)),
@@ -132,23 +130,34 @@ export default function ChallengeSetupPage() {
   if (!challenge) return <div className="text-center py-20 text-muted-foreground">Challenge not found.</div>
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6">
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" asChild className="h-8 w-8 shrink-0">
-          <Link to="/challenges"><ArrowLeft className="h-4 w-4" /></Link>
-        </Button>
-        <div>
-          <h1 className="text-xl font-semibold">{challenge.name}</h1>
-          <p className="text-sm text-muted-foreground">Set up tasks</p>
+    <div className="max-w-lg mx-auto px-4 pt-5 pb-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-5">
+        <Link
+          to="/challenges"
+          className="w-9 h-9 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-all shrink-0"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground truncate">{challenge.name}</p>
+          <p className="text-xs text-muted-foreground">Set up daily tasks</p>
         </div>
       </div>
 
+      {/* Task list */}
       {tree.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <p className="mb-4">No tasks yet. Add your first task below.</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="text-5xl mb-4">📝</div>
+          <p className="text-sm font-semibold text-foreground mb-1">No tasks yet</p>
+          <p className="text-xs text-muted-foreground mb-6">Add tasks your users need to complete each day.</p>
         </div>
       ) : (
-        <div className="border rounded-lg bg-card mb-4 divide-y">
+        <div
+          className="bg-white rounded-xl overflow-hidden mb-4 divide-y divide-[#F3F4F6]"
+          style={{ border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
+        >
           {tree.map((node, i) => (
             <TaskBuilderNode
               key={node.id}
@@ -166,9 +175,12 @@ export default function ChallengeSetupPage() {
         </div>
       )}
 
-      <Button variant="outline" className="w-full" onClick={handleAddRoot}>
-        <Plus className="h-4 w-4 mr-2" /> Add task
-      </Button>
+      <button
+        onClick={handleAddRoot}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-border text-sm font-semibold text-primary hover:border-primary hover:bg-secondary/50 transition-all"
+      >
+        <Plus className="h-4 w-4" /> Add task
+      </button>
     </div>
   )
 }

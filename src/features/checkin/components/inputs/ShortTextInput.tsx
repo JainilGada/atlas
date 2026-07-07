@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Input } from '@/components/ui/input'
 
 interface ShortTextInputProps {
   value: string | null
@@ -11,13 +10,13 @@ export function ShortTextInput({ value, onBlurSave, disabled }: ShortTextInputPr
   const [local, setLocal] = useState(value ?? '')
 
   return (
-    <Input
+    <input
       value={local}
       onChange={e => setLocal(e.target.value)}
       onBlur={() => onBlurSave(local)}
       disabled={disabled}
-      className="h-8 text-sm"
       placeholder="Type here…"
+      className="w-full text-sm text-foreground bg-white border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground disabled:opacity-50"
     />
   )
 }

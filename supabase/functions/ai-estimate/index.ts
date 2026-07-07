@@ -25,15 +25,20 @@ Deno.serve(async (req) => {
       profile.weight_kg && `User weight: ${profile.weight_kg} kg`,
     ].filter(Boolean).join('\n') : ''
 
-    const prompt = `You are a nutrition expert. Estimate the calories for this food item.
+    const qty = item.quantityHint ?? '1 standard serving (100g or typical restaurant portion)'
+    const foodName = item.name.trim().toLowerCase()
 
-Food item: ${item.name}${ item.quantityHint ? `\nQuantity/serving: ${item.quantityHint}` : '' }${ profileCtx ? `\n\nUser context:\n${profileCtx}` : '' }
+    const prompt = `You are a precise nutrition database. Return the calorie count for the exact food and quantity specified. Use USDA/standard nutrition data. Do not adjust for personal preferences.
 
-Respond with ONLY a single integer (whole number) representing the estimated calories (kcal). No units, no explanation — just the number.`
+Food: ${foodName}
+Quantity: ${qty}${ profileCtx ? `\n\nNote (do NOT adjust calories for these): ${profileCtx}` : '' }
+
+Respond with ONLY a single integer (kcal). No units, no text — just the number.`
 
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 16,
+      temperature: 0,
       messages: [{ role: 'user', content: prompt }],
     })
 

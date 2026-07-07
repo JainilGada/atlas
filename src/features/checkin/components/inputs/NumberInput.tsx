@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Input } from '@/components/ui/input'
 
 interface NumberInputProps {
   value: number | null
@@ -12,7 +11,7 @@ export function NumberInput({ value, onBlurSave, disabled, placeholder = '0' }: 
   const [local, setLocal] = useState(value?.toString() ?? '')
 
   return (
-    <Input
+    <input
       type="number"
       value={local}
       onChange={e => setLocal(e.target.value)}
@@ -21,8 +20,8 @@ export function NumberInput({ value, onBlurSave, disabled, placeholder = '0' }: 
         onBlurSave(isNaN(n as number) ? null : n)
       }}
       disabled={disabled}
-      className="h-8 text-sm w-32"
       placeholder={placeholder}
+      className="w-32 text-sm text-foreground bg-white border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground disabled:opacity-50"
     />
   )
 }
