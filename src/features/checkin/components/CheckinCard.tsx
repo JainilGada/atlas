@@ -45,6 +45,58 @@ function Confetti({ active }: { active: boolean }) {
     </div>
   )
 }
+
+const MILESTONE_DAYS = [7, 30, 75]
+
+interface Milestone {
+  day: number
+  emoji: string
+  title: string
+  message: string
+}
+
+function getMilestone(currentDay: number, totalDays: number): Milestone | null {
+  const half = Math.floor(totalDays / 2)
+  const milestones: Array<[number, string, string, string]> = [
+    [7,    '🔥', 'One Week Strong!',    'Seven days down. You\'re building a real habit now.'],
+    [half, '⚡', 'Halfway There!',      `${half} days complete. The momentum is on your side.`],
+    [30,   '💪', '30-Day Warrior!',     'A full month of commitment. Most people quit before this.'],
+    [75,   '🏆', 'Challenge Complete!', 'You went the distance. That\'s what separates the best.'],
+  ]
+
+  for (const [day, emoji, title, message] of milestones) {
+    if (currentDay === day && day <= totalDays) {
+      return { day, emoji, title, message }
+    }
+  }
+  return null
+}
+
+function MilestoneModal({ milestone, onClose }: { milestone: Milestone; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+      onClick={onClose}
+    >
+      <div
+        className="relative bg-white rounded-2xl p-8 max-w-xs w-full text-center shadow-2xl animate-in zoom-in-95 fade-in duration-200"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="text-6xl mb-4">{milestone.emoji}</div>
+        <h2 className="text-xl font-bold text-foreground mb-2">{milestone.title}</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-6">{milestone.message}</p>
+        <button
+          onClick={onClose}
+          className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-[0.97] transition-all"
+        >
+          Keep going 🚀
+        </button>
+      </div>
+    </div>
+  )
+}
+
 import { TaskNode } from './TaskNode'
 import { getOrCreateCheckin, getTaskEntries } from '@/lib/api/checkins'
 import { listTasks, buildTree } from '@/lib/api/tasks'
@@ -75,6 +127,9 @@ function isTaskComplete(entry: TaskEntry | undefined, outputType: Task['output_t
   return (entry.value_text ?? '').length > 0
 }
 
+// Track which milestone days have been shown per challenge (session only)
+const shownMilestones = new Set<string>()
+
 export function CheckinCard({ challenge, date, userId, db }: CheckinCardProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -83,6 +138,7 @@ export function CheckinCard({ challenge, date, userId, db }: CheckinCardProps) {
   const [entries, setEntries] = useState<Record<string, TaskEntry>>({})
   const [toastVisible, setToastVisible] = useState(false)
   const [confettiActive, setConfettiActive] = useState(false)
+  const [milestone, setMilestone] = useState<Milestone | null>(null)
   const prevCompleted = useRef(0)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const confettiTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -126,6 +182,18 @@ export function CheckinCard({ challenge, date, userId, db }: CheckinCardProps) {
   const totalDays = challenge.duration_days ?? 75
   const challengePct = Math.min(100, Math.round((currentDay / totalDays) * 100))
 
+  // Show milestone modal when all tasks done on a milestone day
+  useEffect(() => {
+    if (!isAllDone || total === 0) return
+    const key = `${challenge.id}-${currentDay}`
+    if (shownMilestones.has(key)) return
+    const m = getMilestone(currentDay, totalDays)
+    if (m) {
+      shownMilestones.add(key)
+      setMilestone(m)
+    }
+  }, [isAllDone, currentDay, totalDays, challenge.id, total])
+
   // Trigger confetti + toast when all tasks become complete
   useEffect(() => {
     if (isAllDone && prevCompleted.current !== total && total > 0) {
@@ -144,106 +212,112 @@ export function CheckinCard({ challenge, date, userId, db }: CheckinCardProps) {
   }, [completed, total, isAllDone])
 
   return (
-    <div
-      className="relative bg-white rounded-xl overflow-hidden transition-all duration-300"
-      style={{
-        border: `${isAllDone ? 2 : 1}px solid ${isAllDone ? '#22C55E' : '#E5E7EB'}`,
-        boxShadow: isAllDone
-          ? '0 4px 12px rgba(34,197,94,0.15)'
-          : '0 1px 3px rgba(0,0,0,0.08)',
-      }}
-    >
-      <Confetti active={confettiActive} />
+    <>
+      {milestone && (
+        <MilestoneModal milestone={milestone} onClose={() => setMilestone(null)} />
+      )}
 
-      {/* Card header */}
-      <div className="px-4 pt-4 pb-3">
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <h3 className="font-bold text-[15px] text-foreground leading-tight">{challenge.name}</h3>
-          <span className="shrink-0 text-xs font-semibold text-primary bg-secondary px-2.5 py-1 rounded-full whitespace-nowrap">
-            Day {currentDay}/{totalDays}
-          </span>
-        </div>
+      <div
+        className="relative bg-white rounded-xl overflow-hidden transition-all duration-300"
+        style={{
+          border: `${isAllDone ? 2 : 1}px solid ${isAllDone ? '#22C55E' : '#E5E7EB'}`,
+          boxShadow: isAllDone
+            ? '0 4px 12px rgba(34,197,94,0.15)'
+            : '0 1px 3px rgba(0,0,0,0.08)',
+        }}
+      >
+        <Confetti active={confettiActive} />
 
-        {/* Challenge progress (days) */}
-        <div className="space-y-1 mb-1">
-          <div
-            className="h-1.5 rounded-full overflow-hidden"
-            style={{ backgroundColor: isAllDone ? '#DCFCE7' : '#EDE9FF' }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-500 ease-out"
-              style={{
-                width: `${challengePct}%`,
-                backgroundColor: isAllDone ? '#22C55E' : '#6C63FF',
-              }}
-            />
+        {/* Card header */}
+        <div className="px-4 pt-4 pb-3">
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <h3 className="font-bold text-[15px] text-foreground leading-tight">{challenge.name}</h3>
+            <span className="shrink-0 text-xs font-semibold text-primary bg-secondary px-2.5 py-1 rounded-full whitespace-nowrap">
+              Day {currentDay}/{totalDays}
+            </span>
           </div>
-          <p className="text-[11px] text-muted-foreground">{challengePct}% through challenge</p>
+
+          {/* Challenge progress (days) */}
+          <div className="space-y-1 mb-1">
+            <div
+              className="h-1.5 rounded-full overflow-hidden"
+              style={{ backgroundColor: isAllDone ? '#DCFCE7' : '#EDE9FF' }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-500 ease-out"
+                style={{
+                  width: `${challengePct}%`,
+                  backgroundColor: isAllDone ? '#22C55E' : '#6C63FF',
+                }}
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground">{challengePct}% through challenge</p>
+          </div>
         </div>
+
+        {/* Task list */}
+        {loading ? (
+          <div className="flex justify-center py-8 border-t">
+            <Spinner />
+          </div>
+        ) : error ? (
+          <p className="text-sm text-destructive px-4 pb-4 border-t pt-3">{error}</p>
+        ) : tree.length === 0 ? (
+          <p className="text-sm text-muted-foreground px-4 pb-4 border-t pt-3">
+            No tasks yet.{' '}
+            <a href={`/challenges/${challenge.id}/setup`} className="text-primary underline">
+              Set them up →
+            </a>
+          </p>
+        ) : (
+          <div className="border-t divide-y divide-[#F3F4F6]">
+            {tree.map(node => (
+              <TaskNode
+                key={node.id}
+                node={node}
+                allFlat={flatTasks}
+                checkinId={checkinId!}
+                userId={userId}
+                date={date}
+                db={db}
+                entries={entries}
+                onEntryChange={handleEntryChange}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Footer */}
+        {!loading && !error && total > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[#F3F4F6]">
+            <span
+              className={`text-xs font-semibold ${isAllDone ? 'text-[#22C55E]' : 'text-muted-foreground'}`}
+            >
+              {isAllDone ? '✓ All done!' : `${completed} of ${total} complete`}
+            </span>
+            {/* Task day progress pill */}
+            <div
+              className="h-1.5 rounded-full overflow-hidden"
+              style={{ width: 80, backgroundColor: '#F3F4F6' }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${taskPct}%`,
+                  backgroundColor: isAllDone ? '#22C55E' : '#6C63FF',
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Completion toast */}
+        {toastVisible && (
+          <div className="mx-4 mb-4 bg-[#111827] text-white text-sm font-medium px-4 py-3 rounded-xl shadow-xl animate-in slide-in-from-bottom-2 fade-in">
+            🎉 {challenge.name} — Day {currentDay} done! Keep going!
+          </div>
+        )}
       </div>
-
-      {/* Task list */}
-      {loading ? (
-        <div className="flex justify-center py-8 border-t">
-          <Spinner />
-        </div>
-      ) : error ? (
-        <p className="text-sm text-destructive px-4 pb-4 border-t pt-3">{error}</p>
-      ) : tree.length === 0 ? (
-        <p className="text-sm text-muted-foreground px-4 pb-4 border-t pt-3">
-          No tasks yet.{' '}
-          <a href={`/challenges/${challenge.id}/setup`} className="text-primary underline">
-            Set them up →
-          </a>
-        </p>
-      ) : (
-        <div className="border-t divide-y divide-[#F3F4F6]">
-          {tree.map(node => (
-            <TaskNode
-              key={node.id}
-              node={node}
-              allFlat={flatTasks}
-              checkinId={checkinId!}
-              userId={userId}
-              date={date}
-              db={db}
-              entries={entries}
-              onEntryChange={handleEntryChange}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Footer */}
-      {!loading && !error && total > 0 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-[#F3F4F6]">
-          <span
-            className={`text-xs font-semibold ${isAllDone ? 'text-[#22C55E]' : 'text-muted-foreground'}`}
-          >
-            {isAllDone ? '✓ All done!' : `${completed} of ${total} complete`}
-          </span>
-          {/* Task day progress pill */}
-          <div
-            className="h-1.5 rounded-full overflow-hidden"
-            style={{ width: 80, backgroundColor: '#F3F4F6' }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{
-                width: `${taskPct}%`,
-                backgroundColor: isAllDone ? '#22C55E' : '#6C63FF',
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Completion toast */}
-      {toastVisible && (
-        <div className="mx-4 mb-4 bg-[#111827] text-white text-sm font-medium px-4 py-3 rounded-xl shadow-xl animate-in slide-in-from-bottom-2 fade-in">
-          🎉 {challenge.name} — Day {currentDay} done! Keep going!
-        </div>
-      )}
-    </div>
+    </>
   )
 }
