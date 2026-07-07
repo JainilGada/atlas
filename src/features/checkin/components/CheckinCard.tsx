@@ -1,5 +1,50 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Spinner } from '@/components/ui/spinner'
+
+const CONFETTI_COLORS = ['#6C63FF', '#22C55E', '#F59E0B', '#EF4444', '#3B82F6', '#EC4899']
+
+function Confetti({ active }: { active: boolean }) {
+  const particles = useMemo(() =>
+    Array.from({ length: 60 }, (_, i) => ({
+      id: i,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      left: 10 + Math.random() * 80,
+      delay: Math.random() * 0.5,
+      duration: 1.6 + Math.random() * 0.8,
+      width: 6 + Math.random() * 6,
+      height: 4 + Math.random() * 5,
+      rotate: Math.random() * 360,
+    }))
+  , [])
+
+  if (!active) return null
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-50 rounded-xl">
+      <style>{`
+        @keyframes cfFall {
+          0%   { transform: translateY(-8px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(600px) rotate(540deg); opacity: 0; }
+        }
+      `}</style>
+      {particles.map(p => (
+        <div
+          key={p.id}
+          className="absolute rounded-sm"
+          style={{
+            left: `${p.left}%`,
+            top: 0,
+            width: p.width,
+            height: p.height,
+            backgroundColor: p.color,
+            transform: `rotate(${p.rotate}deg)`,
+            animation: `cfFall ${p.duration}s ${p.delay}s ease-in both`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
 import { TaskNode } from './TaskNode'
 import { getOrCreateCheckin, getTaskEntries } from '@/lib/api/checkins'
 import { listTasks, buildTree } from '@/lib/api/tasks'
@@ -37,8 +82,10 @@ export function CheckinCard({ challenge, date, userId, db }: CheckinCardProps) {
   const [flatTasks, setFlatTasks] = useState<Task[]>([])
   const [entries, setEntries] = useState<Record<string, TaskEntry>>({})
   const [toastVisible, setToastVisible] = useState(false)
+  const [confettiActive, setConfettiActive] = useState(false)
   const prevCompleted = useRef(0)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const confettiTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -79,22 +126,26 @@ export function CheckinCard({ challenge, date, userId, db }: CheckinCardProps) {
   const totalDays = challenge.duration_days ?? 75
   const challengePct = Math.min(100, Math.round((currentDay / totalDays) * 100))
 
-  // Trigger toast when all tasks become complete
+  // Trigger confetti + toast when all tasks become complete
   useEffect(() => {
     if (isAllDone && prevCompleted.current !== total && total > 0) {
       setToastVisible(true)
+      setConfettiActive(true)
       if (toastTimer.current) clearTimeout(toastTimer.current)
+      if (confettiTimer.current) clearTimeout(confettiTimer.current)
       toastTimer.current = setTimeout(() => setToastVisible(false), 3500)
+      confettiTimer.current = setTimeout(() => setConfettiActive(false), 2800)
     }
     prevCompleted.current = completed
     return () => {
       if (toastTimer.current) clearTimeout(toastTimer.current)
+      if (confettiTimer.current) clearTimeout(confettiTimer.current)
     }
   }, [completed, total, isAllDone])
 
   return (
     <div
-      className="bg-white rounded-xl overflow-hidden transition-all duration-300"
+      className="relative bg-white rounded-xl overflow-hidden transition-all duration-300"
       style={{
         border: `${isAllDone ? 2 : 1}px solid ${isAllDone ? '#22C55E' : '#E5E7EB'}`,
         boxShadow: isAllDone
@@ -102,6 +153,8 @@ export function CheckinCard({ challenge, date, userId, db }: CheckinCardProps) {
           : '0 1px 3px rgba(0,0,0,0.08)',
       }}
     >
+      <Confetti active={confettiActive} />
+
       {/* Card header */}
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-start justify-between gap-2 mb-3">
