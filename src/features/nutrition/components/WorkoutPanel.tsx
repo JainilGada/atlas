@@ -1,10 +1,11 @@
 import { useRef, useState, useEffect } from 'react'
-import { Plus, Trash2, Dumbbell, Camera, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Dumbbell, Camera, Loader2, Sparkles } from 'lucide-react'
 import {
   listWorkoutExercises, createWorkoutExercise, softDeleteWorkoutExercise, exerciseToKcal,
 } from '@/lib/api/nutrition'
 import { WORKOUT_CATEGORY_LABELS, type WorkoutCategory, type WorkoutExercise } from '@/lib/types'
 import type { SupabaseClient } from '@/lib/supabase'
+import { GymSessionModal } from './GymSessionModal'
 
 interface WorkoutPanelProps {
   dayLogId: string
@@ -34,6 +35,7 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange, onWorkoutsCha
   const [scanning, setScanning] = useState(false)
   const [scanned, setScanned] = useState<ScannedExercise[]>([])
   const [addingScanned, setAddingScanned] = useState(false)
+  const [showGuidedSession, setShowGuidedSession] = useState(false)
   const photoRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -152,6 +154,14 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange, onWorkoutsCha
               −{totalKcal} kcal
             </span>
           )}
+          {/* Guided session button */}
+          <button
+            onClick={() => setShowGuidedSession(true)}
+            title="AI-guided workout session"
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-[#F3F4F6] text-muted-foreground hover:bg-secondary hover:text-primary transition-all"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+          </button>
           {/* Scan photo button */}
           <button
             onClick={() => photoRef.current?.click()}
@@ -339,8 +349,24 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange, onWorkoutsCha
 
       {exercises.length === 0 && !showForm && scanned.length === 0 && (
         <p className="text-xs text-muted-foreground">
-          Log workouts manually or tap <Camera className="inline h-3 w-3 mb-0.5" /> to scan a gym whiteboard.
+          Tap <Sparkles className="inline h-3 w-3 mb-0.5" /> for a guided session, or <Camera className="inline h-3 w-3 mb-0.5" /> to scan a gym whiteboard.
         </p>
+      )}
+
+      {showGuidedSession && (
+        <GymSessionModal
+          dayLogId={dayLogId}
+          userId={userId}
+          db={db}
+          sortOrderStart={exercises.length}
+          onClose={() => setShowGuidedSession(false)}
+          onWorkoutsAdded={() => {
+            listWorkoutExercises(db, dayLogId).then(exs => {
+              setExercises(exs)
+              onWorkoutsChange?.(exs)
+            }).catch(console.error)
+          }}
+        />
       )}
     </div>
   )
