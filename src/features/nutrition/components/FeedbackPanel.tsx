@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sparkles } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
 import { updateDayLog } from '@/lib/api/nutrition'
@@ -24,6 +24,12 @@ export function FeedbackPanel({ dayLog, consumedKcal, burnedKcal, allItems, work
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState(dayLog.ai_feedback ?? '')
   const [error, setError] = useState<string | null>(null)
+
+  // Reset feedback when day changes
+  useEffect(() => {
+    setFeedback(dayLog.ai_feedback ?? '')
+    setError(null)
+  }, [dayLog.id])
 
   async function getFeedback() {
     setLoading(true)

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { DayLog } from '@/lib/types'
 
 interface DailySummaryProps {
@@ -67,6 +68,16 @@ export function DailySummary({ dayLog, consumedKcal }: DailySummaryProps) {
         <Stat label="Net" value={net} unit="kcal" />
         <Stat label="Goal" value={goal || '—'} unit={goal ? 'kcal' : ''} />
       </div>
+
+      {/* No-goal nudge */}
+      {!goal && (
+        <p className="text-xs text-muted-foreground mt-3 text-center">
+          No calorie goal set.{' '}
+          <Link to="/settings/nutrition" className="text-primary font-medium hover:underline">
+            Set up your profile →
+          </Link>
+        </p>
+      )}
     </div>
   )
 }

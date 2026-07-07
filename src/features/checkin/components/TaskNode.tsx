@@ -123,12 +123,25 @@ export function TaskNode({
         style={{ paddingLeft: `${indent}px` }}
       >
         <div className="flex items-start gap-3 py-3 px-3">
-          {/* Completion indicator */}
-          <div className="shrink-0 mt-0.5 text-muted-foreground">
-            {complete
-              ? <CheckCircle2 className="h-5 w-5 text-green-600" />
-              : <Circle className="h-5 w-5" />}
-          </div>
+          {/* Completion indicator — tappable for yes_no tasks */}
+          {node.output_type === 'yes_no' ? (
+            <button
+              className="shrink-0 mt-0.5 w-11 h-11 -m-3 flex items-center justify-center rounded-full transition-colors active:scale-90"
+              onClick={() => !saving && save({ value_bool: entry?.value_bool === true ? null : true })}
+              disabled={saving}
+              aria-label={complete ? 'Mark incomplete' : 'Mark complete'}
+            >
+              {complete
+                ? <CheckCircle2 className="h-5 w-5 text-green-600" />
+                : <Circle className="h-5 w-5 text-muted-foreground" />}
+            </button>
+          ) : (
+            <div className="shrink-0 mt-0.5">
+              {complete
+                ? <CheckCircle2 className="h-5 w-5 text-green-600" />
+                : <Circle className="h-5 w-5 text-muted-foreground" />}
+            </div>
+          )}
 
           {/* Content */}
           <div className="flex-1 min-w-0 space-y-2">
@@ -152,7 +165,7 @@ export function TaskNode({
               )}
             </div>
 
-            {/* Input */}
+            {/* Input — for yes_no, only show No button since circle handles Yes */}
             {node.output_type === 'yes_no' && (
               <YesNoInput value={entry?.value_bool ?? null} onChange={v => save({ value_bool: v })} disabled={saving} />
             )}
