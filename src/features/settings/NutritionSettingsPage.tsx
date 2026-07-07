@@ -4,8 +4,29 @@ import { Link } from 'react-router-dom'
 import { useRequiredSession } from '@/features/auth/SessionContext'
 import { getProfile, upsertProfile, goalKcal } from '@/lib/api/profile'
 import type { UserProfile } from '@/lib/types'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
+
+function NativeSelect({
+  value, onChange, placeholder, options, disabled,
+}: {
+  value: string
+  onChange: (v: string) => void
+  placeholder: string
+  options: { value: string; label: string }[]
+  disabled?: boolean
+}) {
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      disabled={disabled}
+      className="w-full h-10 rounded-xl border border-border bg-white px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all disabled:opacity-50"
+    >
+      <option value="">{placeholder}</option>
+      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  )
+}
 
 // ── Conversion helpers ────────────────────────────────────────────────────────
 const kgToLbs = (kg: number) => +(kg * 2.20462).toFixed(1)
@@ -245,17 +266,14 @@ export default function NutritionSettingsPage() {
           <div className="space-y-3">
             <div>
               <FieldLabel>Goal</FieldLabel>
-              <Select value={goal} onValueChange={setGoal}>
-                <SelectTrigger><SelectValue placeholder="Select goal…" /></SelectTrigger>
-                <SelectContent>{GOALS.map(g => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={goal} onChange={setGoal} placeholder="Select goal…" options={GOALS} />
             </div>
             <div>
               <FieldLabel>Dietary preference</FieldLabel>
-              <Select value={dietPref} onValueChange={setDietPref}>
-                <SelectTrigger><SelectValue placeholder="Select preference…" /></SelectTrigger>
-                <SelectContent>{PREFS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={dietPref} onChange={setDietPref} placeholder="Select preference…"
+                options={PREFS.map(p => ({ value: p, label: p }))}
+              />
             </div>
             <div>
               <FieldLabel>Food allergies <span className="font-normal">(comma-separated)</span></FieldLabel>
@@ -333,12 +351,7 @@ export default function NutritionSettingsPage() {
 
             <div>
               <FieldLabel>Activity level</FieldLabel>
-              <Select value={activity} onValueChange={setActivity}>
-                <SelectTrigger><SelectValue placeholder="Select level…" /></SelectTrigger>
-                <SelectContent>
-                  {ACTIVITY_LEVELS.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <NativeSelect value={activity} onChange={setActivity} placeholder="Select level…" options={ACTIVITY_LEVELS} />
             </div>
 
             {tdeePreview && (

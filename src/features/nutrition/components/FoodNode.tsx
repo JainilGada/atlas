@@ -1,11 +1,8 @@
 import { useState } from 'react'
 import { Plus, Trash2, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { computeKcal } from '@/lib/api/nutrition'
 import type { FoodNode as FN, FoodItem, MealSlot, UserProfile } from '@/lib/types'
-import { cn } from '@/lib/utils'
 
 interface FoodNodeProps {
   node: FN
@@ -45,10 +42,18 @@ export function FoodNode({
     setEditingKcal(false)
   }
 
+  const kcalBadgeClass = isLeaf
+    ? node.kcal_source === 'user_override'
+      ? 'bg-blue-100 text-blue-700 cursor-pointer'
+      : node.kcal != null
+        ? 'bg-muted text-muted-foreground cursor-pointer hover:bg-accent'
+        : 'bg-muted text-muted-foreground/50 cursor-pointer'
+    : 'bg-muted text-foreground cursor-default'
+
   return (
     <div>
       <div
-        className="group flex items-center gap-2 py-2.5 px-3 hover:bg-muted/30 transition-colors"
+        className="group flex items-center gap-2 py-2.5 px-3 hover:bg-[#F9FAFB] transition-colors"
         style={{ paddingLeft: `${depth * 16 + 12}px` }}
       >
         {/* Expand/collapse */}
@@ -60,7 +65,7 @@ export function FoodNode({
 
         {/* Name + quantity */}
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium">{node.name}</span>
+          <span className="text-sm font-medium text-foreground">{node.name}</span>
           {node.quantity_hint && (
             <span className="text-xs text-muted-foreground ml-1.5">{node.quantity_hint}</span>
           )}
@@ -71,29 +76,20 @@ export function FoodNode({
           {isEstimating ? (
             <Spinner className="h-4 w-4 text-muted-foreground" />
           ) : editingKcal ? (
-            <Input
+            <input
               autoFocus
               type="number"
               value={kcalInput}
               onChange={e => setKcalInput(e.target.value)}
               onBlur={commitKcalEdit}
               onKeyDown={e => { if (e.key === 'Enter') commitKcalEdit() }}
-              className="h-6 w-20 text-xs px-1.5"
+              className="h-6 w-20 text-xs px-1.5 rounded border border-border bg-white text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
             />
           ) : (
             <button
               onClick={isLeaf ? startKcalEdit : undefined}
               title={isLeaf ? 'Click to override' : 'Computed from children'}
-              className={cn(
-                'text-xs font-medium px-2 py-0.5 rounded-full',
-                isLeaf
-                  ? node.kcal_source === 'user_override'
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 cursor-pointer'
-                    : node.kcal != null
-                      ? 'bg-muted text-muted-foreground cursor-pointer hover:bg-accent'
-                      : 'bg-muted text-muted-foreground/50 cursor-pointer'
-                  : 'bg-muted text-foreground cursor-default',
-              )}
+              className={`text-xs font-medium px-2 py-0.5 rounded-full ${kcalBadgeClass}`}
             >
               {displayKcal} kcal
             </button>
@@ -103,29 +99,29 @@ export function FoodNode({
         {/* Actions — always visible on mobile, fade-in on desktop hover */}
         <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
           {isLeaf && (
-            <Button
-              variant="ghost" size="icon" className="h-6 w-6"
+            <button
               onClick={() => onEstimate(node.id)}
               disabled={isEstimating}
               title="Re-estimate calories"
+              className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-primary hover:bg-secondary transition-all disabled:opacity-30"
             >
               <RefreshCw className="h-3 w-3" />
-            </Button>
+            </button>
           )}
-          <Button
-            variant="ghost" size="icon" className="h-6 w-6"
+          <button
             onClick={() => onAddChild(node.id, slot, node.children.length)}
             title="Add sub-item"
+            className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-primary hover:bg-secondary transition-all"
           >
             <Plus className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive"
+          </button>
+          <button
             onClick={() => { if (confirm('Delete this item?')) onDelete(node.id) }}
             title="Delete"
+            className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
           >
             <Trash2 className="h-3 w-3" />
-          </Button>
+          </button>
         </div>
       </div>
 

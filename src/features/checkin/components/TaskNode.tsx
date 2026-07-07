@@ -118,7 +118,7 @@ export function TaskNode({
       <div
         className={cn(
           'group border-b last:border-b-0 transition-colors',
-          complete ? 'bg-green-50/50 dark:bg-green-950/20' : '',
+          complete ? 'bg-green-50/50' : '',
         )}
         style={{ paddingLeft: `${indent}px` }}
       >
@@ -126,7 +126,7 @@ export function TaskNode({
           {/* Completion indicator */}
           <div className="shrink-0 mt-0.5 text-muted-foreground">
             {complete
-              ? <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+              ? <CheckCircle2 className="h-5 w-5 text-green-600" />
               : <Circle className="h-5 w-5" />}
           </div>
 

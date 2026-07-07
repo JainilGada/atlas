@@ -1,7 +1,5 @@
 import { useState, type FormEvent } from 'react'
 import { Plus, ChevronDown, ChevronUp } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { FoodNode } from './FoodNode'
 import { buildFoodTree, totalSlotKcal, createFoodItem, updateFoodItem, softDeleteFoodItem } from '@/lib/api/nutrition'
@@ -41,12 +39,10 @@ export function SlotCard({ slot, items, dayLogId, userId, date, db, profile, onI
   const totalKcal = totalSlotKcal(tree)
 
   function update(updated: FoodItem[]) {
-    // Replace this slot's items in parent state
     const others = items.filter(f => f.slot !== slot)
     onItemsChange(slot, [...others, ...updated])
   }
 
-  // currentItems: pass explicitly to avoid stale closure when called right after a state update
   async function estimate(itemId: string, item?: FoodItem, currentItems: FoodItem[] = items) {
     const target = item ?? currentItems.find(f => f.id === itemId)
     if (!target) return
@@ -87,7 +83,6 @@ export function SlotCard({ slot, items, dayLogId, userId, date, db, profile, onI
       setAddName('')
       setAddQty('')
       setShowAdd(false)
-      // Pass updated items so estimate doesn't use stale closure
       estimate(newItem.id, newItem, updated)
     } finally {
       setAdding(false)
@@ -100,7 +95,6 @@ export function SlotCard({ slot, items, dayLogId, userId, date, db, profile, onI
   }
 
   async function handleDelete(id: string) {
-    // Also delete all descendants
     const getDesc = (itemId: string): string[] => {
       const children = items.filter(f => f.parent_id === itemId).map(f => f.id)
       return [...children, ...children.flatMap(getDesc)]
@@ -176,27 +170,35 @@ export function SlotCard({ slot, items, dayLogId, userId, date, db, profile, onI
           <div className="px-3 py-2 border-t border-[#F3F4F6]">
             {showAdd ? (
               <form onSubmit={handleAdd} className="flex gap-2 items-center">
-                <Input
+                <input
                   autoFocus
                   value={addName}
                   onChange={e => setAddName(e.target.value)}
                   placeholder="Food name"
-                  className="h-8 text-sm flex-1"
                   disabled={adding}
+                  className="flex-1 h-8 text-sm text-foreground bg-white border border-border rounded-lg px-2.5 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all disabled:opacity-50"
                 />
-                <Input
+                <input
                   value={addQty}
                   onChange={e => setAddQty(e.target.value)}
                   placeholder="Qty"
-                  className="h-8 text-sm w-24"
                   disabled={adding}
+                  className="w-20 h-8 text-sm text-foreground bg-white border border-border rounded-lg px-2.5 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all disabled:opacity-50"
                 />
-                <Button type="submit" size="sm" className="h-8" disabled={adding || !addName.trim()}>
+                <button
+                  type="submit"
+                  disabled={adding || !addName.trim()}
+                  className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center"
+                >
                   {adding ? <Spinner className="h-3.5 w-3.5" /> : 'Add'}
-                </Button>
-                <Button type="button" variant="ghost" size="sm" className="h-8" onClick={() => setShowAdd(false)}>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAdd(false)}
+                  className="h-8 px-3 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground transition-all"
+                >
                   Cancel
-                </Button>
+                </button>
               </form>
             ) : (
               <button

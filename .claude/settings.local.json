@@ -8,7 +8,10 @@
       "mcp__supabase__deploy_edge_function",
       "Bash(find /Users/jg/ai/atlasV2 -name deno.json* -o -name supabase.json -o -name *functions* -type f)",
       "Bash(grep -r \"function\\\\|edge\\\\|otp\\\\|email\\\\|Resend\" /Users/jg/ai/atlasV2 --include=*.md)",
-      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")"
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
