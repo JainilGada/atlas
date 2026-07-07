@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, Dumbbell } from 'lucide-react'
+import { useRef, useState, useEffect } from 'react'
+import { Plus, Trash2, Dumbbell, Camera, Loader2 } from 'lucide-react'
 import {
   listWorkoutExercises, createWorkoutExercise, softDeleteWorkoutExercise, exerciseToKcal,
 } from '@/lib/api/nutrition'
-import { WORKOUT_CATEGORY_LABELS, WORKOUT_KCAL_PER_MIN, type WorkoutCategory, type WorkoutExercise } from '@/lib/types'
+import { WORKOUT_CATEGORY_LABELS, type WorkoutCategory, type WorkoutExercise } from '@/lib/types'
 import type { SupabaseClient } from '@/lib/supabase'
 
 interface WorkoutPanelProps {
@@ -14,14 +14,26 @@ interface WorkoutPanelProps {
 }
 
 const CATEGORIES = Object.keys(WORKOUT_CATEGORY_LABELS) as WorkoutCategory[]
-
 const EMPTY_FORM = { name: '', category: 'other' as WorkoutCategory, duration_min: '', sets: '', reps: '' }
+
+interface ScannedExercise {
+  name: string
+  category: WorkoutCategory
+  sets?: number
+  reps?: number
+  duration_min?: number
+  selected: boolean
+}
 
 export function WorkoutPanel({ dayLogId, userId, db, onKcalChange }: WorkoutPanelProps) {
   const [exercises, setExercises] = useState<WorkoutExercise[]>([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [scanning, setScanning] = useState(false)
+  const [scanned, setScanned] = useState<ScannedExercise[]>([])
+  const [addingScanned, setAddingScanned] = useState(false)
+  const photoRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     listWorkoutExercises(db, dayLogId).then(setExercises).catch(console.error)
@@ -67,6 +79,59 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange }: WorkoutPane
     setExercises(prev => prev.filter(e => e.id !== id))
   }
 
+  async function handlePhotoScan(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setScanning(true)
+    setScanned([])
+    try {
+      const arrayBuffer = await file.arrayBuffer()
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+      const mediaType = file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
+      const { data, error } = await db.functions.invoke('ai-workout-scan', {
+        body: { imageBase64: base64, mediaType },
+      })
+      if (error) throw error
+      const exs = (data as { exercises: ScannedExercise[] }).exercises ?? []
+      setScanned(exs.map(ex => ({
+        ...ex,
+        category: (CATEGORIES.includes(ex.category as WorkoutCategory) ? ex.category : 'other') as WorkoutCategory,
+        selected: true,
+      })))
+    } catch (err) {
+      console.error('Scan failed', err)
+    } finally {
+      setScanning(false)
+      if (photoRef.current) photoRef.current.value = ''
+    }
+  }
+
+  async function handleAddScanned() {
+    const toAdd = scanned.filter(s => s.selected)
+    if (!toAdd.length) return
+    setAddingScanned(true)
+    try {
+      const created = await Promise.all(toAdd.map((s, i) => {
+        const kcal_burned = s.duration_min ? exerciseToKcal(s.category, s.duration_min) : null
+        return createWorkoutExercise(db, {
+          day_log_id: dayLogId,
+          user_id: userId,
+          name: s.name,
+          category: s.category,
+          sets: s.sets ?? null,
+          reps: s.reps ?? null,
+          duration_min: s.duration_min ?? null,
+          kcal_burned,
+          sort_order: exercises.length + i,
+        })
+      }))
+      setExercises(prev => [...prev, ...created])
+      setScanned([])
+    } finally {
+      setAddingScanned(false)
+    }
+  }
+
   return (
     <div
       className="bg-white rounded-xl p-4"
@@ -76,12 +141,28 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange }: WorkoutPane
         <p className="text-sm font-semibold text-foreground flex items-center gap-2">
           <Dumbbell className="h-4 w-4 text-primary" /> Workouts
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {totalKcal > 0 && (
             <span className="text-xs font-medium text-primary bg-secondary px-2.5 py-1 rounded-full">
               −{totalKcal} kcal
             </span>
           )}
+          {/* Scan photo button */}
+          <button
+            onClick={() => photoRef.current?.click()}
+            disabled={scanning}
+            title="Scan whiteboard photo"
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-[#F3F4F6] text-muted-foreground hover:bg-secondary hover:text-primary transition-all disabled:opacity-50"
+          >
+            {scanning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+          </button>
+          <input
+            ref={photoRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/heic"
+            className="sr-only"
+            onChange={handlePhotoScan}
+          />
           <button
             onClick={() => setShowForm(s => !s)}
             className="w-7 h-7 flex items-center justify-center rounded-full bg-secondary text-primary hover:bg-primary hover:text-primary-foreground transition-all"
@@ -91,6 +172,50 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange }: WorkoutPane
           </button>
         </div>
       </div>
+
+      {/* Scanned results */}
+      {scanned.length > 0 && (
+        <div className="mb-3 border border-primary/20 rounded-xl p-3 bg-secondary/30 space-y-2">
+          <p className="text-xs font-semibold text-primary mb-2">
+            Found {scanned.length} exercise{scanned.length > 1 ? 's' : ''} — select to add:
+          </p>
+          {scanned.map((s, i) => (
+            <label key={i} className="flex items-start gap-2.5 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={s.selected}
+                onChange={e => setScanned(prev => prev.map((x, j) => j === i ? { ...x, selected: e.target.checked } : x))}
+                className="mt-0.5 accent-primary h-4 w-4 rounded"
+              />
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium text-foreground">{s.name}</span>
+                <span className="text-[11px] text-muted-foreground bg-[#F3F4F6] px-1.5 py-0.5 rounded-full ml-2">
+                  {WORKOUT_CATEGORY_LABELS[s.category]}
+                </span>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {s.duration_min ? `${s.duration_min} min` : ''}
+                  {s.sets ? `${s.duration_min ? ' · ' : ''}${s.sets}×${s.reps ?? '?'}` : ''}
+                </p>
+              </div>
+            </label>
+          ))}
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleAddScanned}
+              disabled={addingScanned || !scanned.some(s => s.selected)}
+              className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-all"
+            >
+              {addingScanned ? 'Adding…' : `Add ${scanned.filter(s => s.selected).length} exercise${scanned.filter(s => s.selected).length !== 1 ? 's' : ''}`}
+            </button>
+            <button
+              onClick={() => setScanned([])}
+              className="px-3 py-2 rounded-xl border border-border text-xs text-muted-foreground hover:text-foreground transition-all"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Exercise list */}
       {exercises.length > 0 && (
@@ -122,10 +247,9 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange }: WorkoutPane
         </div>
       )}
 
-      {/* Add form */}
+      {/* Manual add form */}
       {showForm && (
         <div className="border-t border-[#F3F4F6] pt-3 space-y-2.5">
-          {/* Name */}
           <input
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -133,7 +257,6 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange }: WorkoutPane
             className="w-full text-sm text-foreground bg-white border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground"
           />
 
-          {/* Category + Duration row */}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <label className="text-[11px] text-muted-foreground font-medium">Type</label>
@@ -160,7 +283,6 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange }: WorkoutPane
             </div>
           </div>
 
-          {/* Sets / Reps row */}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <label className="text-[11px] text-muted-foreground font-medium">Sets (optional)</label>
@@ -186,14 +308,12 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange }: WorkoutPane
             </div>
           </div>
 
-          {/* Kcal preview */}
           {form.duration_min && (
             <p className="text-[11px] text-muted-foreground">
-              ≈ {exerciseToKcal(form.category, parseInt(form.duration_min) || 0)} kcal estimated for {WORKOUT_CATEGORY_LABELS[form.category].toLowerCase()}
+              ≈ {exerciseToKcal(form.category, parseInt(form.duration_min) || 0)} kcal for {WORKOUT_CATEGORY_LABELS[form.category].toLowerCase()}
             </p>
           )}
 
-          {/* Actions */}
           <div className="flex gap-2 pt-0.5">
             <button
               onClick={handleAdd}
@@ -212,9 +332,9 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange }: WorkoutPane
         </div>
       )}
 
-      {exercises.length === 0 && !showForm && (
+      {exercises.length === 0 && !showForm && scanned.length === 0 && (
         <p className="text-xs text-muted-foreground">
-          Log your workouts to track calories burned.
+          Log workouts manually or tap <Camera className="inline h-3 w-3 mb-0.5" /> to scan a gym whiteboard.
         </p>
       )}
     </div>
