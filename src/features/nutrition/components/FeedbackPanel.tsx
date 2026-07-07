@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { updateDayLog } from '@/lib/api/nutrition'
 import type { DayLog, UserProfile, FoodItem, MealSlot } from '@/lib/types'
@@ -41,22 +39,23 @@ export function FeedbackPanel({ dayLog, consumedKcal, burnedKcal, allItems, prof
         }
       }).filter(Boolean)
 
-      const dayLogSummary = {
-        date: dayLog.date,
-        goal_kcal: dayLog.goal_kcal,
-        consumed_kcal: consumedKcal,
-        burned_kcal: burnedKcal,
-        net_kcal: consumedKcal - burnedKcal,
-        balance: dayLog.goal_kcal ? (consumedKcal - burnedKcal) - dayLog.goal_kcal : null,
-        steps: dayLog.steps,
-        water_litres: dayLog.water_litres,
-        strength_duration_min: dayLog.strength_duration_min,
-        strength_intensity: dayLog.strength_intensity,
-        meals,
-      }
-
       const { data, error: fnErr } = await db.functions.invoke('ai-feedback', {
-        body: { dayLog: dayLogSummary, profile },
+        body: {
+          dayLog: {
+            date: dayLog.date,
+            goal_kcal: dayLog.goal_kcal,
+            consumed_kcal: consumedKcal,
+            burned_kcal: burnedKcal,
+            net_kcal: consumedKcal - burnedKcal,
+            balance: dayLog.goal_kcal ? (consumedKcal - burnedKcal) - dayLog.goal_kcal : null,
+            steps: dayLog.steps,
+            water_litres: dayLog.water_litres,
+            strength_duration_min: dayLog.strength_duration_min,
+            strength_intensity: dayLog.strength_intensity,
+            meals,
+          },
+          profile,
+        },
       })
       if (fnErr) throw fnErr
 
@@ -74,32 +73,41 @@ export function FeedbackPanel({ dayLog, consumedKcal, burnedKcal, allItems, prof
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3 px-4 pt-4 flex flex-row items-center justify-between">
-        <CardTitle className="text-sm font-medium flex items-center gap-1.5">
+    <div
+      className="bg-white rounded-xl p-4"
+      style={{ border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
           <Sparkles className="h-4 w-4 text-amber-500" /> AI Feedback
-        </CardTitle>
-        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={getFeedback} disabled={loading}>
-          {loading ? <Spinner className="h-3.5 w-3.5 mr-1" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
+        </p>
+        <button
+          onClick={getFeedback}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-primary text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-all duration-150 disabled:opacity-50"
+        >
+          {loading
+            ? <Spinner className="h-3.5 w-3.5" />
+            : <Sparkles className="h-3.5 w-3.5" />}
           {feedback ? 'Refresh' : 'Get feedback'}
-        </Button>
-      </CardHeader>
-      <CardContent className="px-4 pb-4">
-        {error && <p className="text-sm text-destructive">{error}</p>}
-        {loading && !feedback && (
-          <div className="flex justify-center py-4"><Spinner /></div>
-        )}
-        {feedback && (
-          <div className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
-            {feedback}
-          </div>
-        )}
-        {!feedback && !loading && !error && (
-          <p className="text-sm text-muted-foreground">
-            Log your meals for the day, then tap "Get feedback" for personalised nutrition insights.
-          </p>
-        )}
-      </CardContent>
-    </Card>
+        </button>
+      </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
+
+      {loading && !feedback && (
+        <div className="flex justify-center py-6"><Spinner /></div>
+      )}
+
+      {feedback ? (
+        <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/80">
+          {feedback}
+        </div>
+      ) : !loading && !error ? (
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Log your meals for the day, then tap "Get feedback" for personalised nutrition insights.
+        </p>
+      ) : null}
+    </div>
   )
 }

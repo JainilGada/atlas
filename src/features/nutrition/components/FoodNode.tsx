@@ -100,8 +100,8 @@ export function FoodNode({
           )}
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        {/* Actions — always visible on mobile, fade-in on desktop hover */}
+        <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
           {isLeaf && (
             <Button
               variant="ghost" size="icon" className="h-6 w-6"

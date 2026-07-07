@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Footprints, Droplets, Dumbbell } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { updateDayLog, stepsToKcal, strengthToKcal } from '@/lib/api/nutrition'
 import type { DayLog } from '@/lib/types'
@@ -14,18 +11,45 @@ interface ActivityPanelProps {
   onBurnedChange: (burned: number) => void
 }
 
+function ActivityInput({
+  value,
+  onChange,
+  onBlur,
+  placeholder,
+  step,
+}: {
+  value: string
+  onChange: (v: string) => void
+  onBlur: () => void
+  placeholder: string
+  step?: string
+}) {
+  return (
+    <input
+      type="number"
+      min="0"
+      step={step}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      onBlur={onBlur}
+      placeholder={placeholder}
+      className="w-full h-10 rounded-lg border border-border bg-white px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+    />
+  )
+}
+
 export function ActivityPanel({ dayLog, db, onBurnedChange }: ActivityPanelProps) {
   const [steps, setSteps] = useState(dayLog.steps?.toString() ?? '')
   const [water, setWater] = useState(dayLog.water_litres?.toString() ?? '')
   const [duration, setDuration] = useState(dayLog.strength_duration_min?.toString() ?? '')
   const [intensity, setIntensity] = useState(dayLog.strength_intensity ?? '')
 
-  // Recompute burned when activity changes
+  const stepsKcal = stepsToKcal(parseInt(steps) || 0)
+  const strengthKcal = duration && intensity ? strengthToKcal(parseInt(duration) || 0, intensity) : 0
+  const totalBurned = stepsKcal + strengthKcal
+
   useEffect(() => {
-    const s = parseInt(steps) || 0
-    const d = parseInt(duration) || 0
-    const burned = stepsToKcal(s) + (d && intensity ? strengthToKcal(d, intensity) : 0)
-    onBurnedChange(burned)
+    onBurnedChange(totalBurned)
   }, [steps, duration, intensity])
 
   async function save(patch: Partial<DayLog>) {
@@ -36,61 +60,66 @@ export function ActivityPanel({ dayLog, db, onBurnedChange }: ActivityPanelProps
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3 px-4 pt-4">
-        <CardTitle className="text-sm font-medium">Activity</CardTitle>
-      </CardHeader>
-      <CardContent className="px-4 pb-4 space-y-3">
+    <div
+      className="bg-white rounded-xl p-4"
+      style={{ border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm font-semibold text-foreground">Activity</p>
+        {totalBurned > 0 && (
+          <span className="text-xs font-medium text-primary bg-secondary px-2.5 py-1 rounded-full">
+            −{totalBurned} kcal burned
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        {/* Steps + Water row */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label htmlFor="steps" className="text-xs flex items-center gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
               <Footprints className="h-3.5 w-3.5" /> Steps
-            </Label>
-            <Input
-              id="steps"
-              type="number"
-              min="0"
+            </label>
+            <ActivityInput
               value={steps}
-              onChange={e => setSteps(e.target.value)}
+              onChange={setSteps}
               onBlur={() => save({ steps: parseInt(steps) || null })}
-              className="h-8 text-sm"
               placeholder="0"
             />
+            {stepsKcal > 0 && (
+              <p className="text-[11px] text-muted-foreground">≈ {stepsKcal} kcal</p>
+            )}
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="water" className="text-xs flex items-center gap-1.5">
-              <Droplets className="h-3.5 w-3.5" /> Water (L)
-            </Label>
-            <Input
-              id="water"
-              type="number"
-              min="0"
-              step="0.1"
+            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <Droplets className="h-3.5 w-3.5 text-blue-500" /> Water (L)
+            </label>
+            <ActivityInput
               value={water}
-              onChange={e => setWater(e.target.value)}
+              onChange={setWater}
               onBlur={() => save({ water_litres: parseFloat(water) || null })}
-              className="h-8 text-sm"
               placeholder="0.0"
+              step="0.1"
             />
           </div>
         </div>
 
+        {/* Strength row */}
         <div className="space-y-1.5">
-          <Label className="text-xs flex items-center gap-1.5">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
             <Dumbbell className="h-3.5 w-3.5" /> Strength training
-          </Label>
+          </label>
           <div className="flex gap-2">
-            <Input
-              type="number"
-              min="0"
-              value={duration}
-              onChange={e => setDuration(e.target.value)}
-              onBlur={() => save({ strength_duration_min: parseInt(duration) || null, strength_intensity: intensity || null })}
-              className="h-8 text-sm w-20"
-              placeholder="min"
-            />
+            <div className="w-24 shrink-0">
+              <ActivityInput
+                value={duration}
+                onChange={setDuration}
+                onBlur={() => save({ strength_duration_min: parseInt(duration) || null, strength_intensity: intensity || null })}
+                placeholder="min"
+              />
+            </div>
             <Select value={intensity} onValueChange={v => { setIntensity(v); save({ strength_intensity: v }) }}>
-              <SelectTrigger className="h-8 text-sm flex-1">
+              <SelectTrigger className="flex-1 h-10 text-sm">
                 <SelectValue placeholder="Intensity…" />
               </SelectTrigger>
               <SelectContent>
@@ -100,8 +129,11 @@ export function ActivityPanel({ dayLog, db, onBurnedChange }: ActivityPanelProps
               </SelectContent>
             </Select>
           </div>
+          {strengthKcal > 0 && (
+            <p className="text-[11px] text-muted-foreground">≈ {strengthKcal} kcal</p>
+          )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

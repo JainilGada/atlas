@@ -4,30 +4,62 @@ import { Link } from 'react-router-dom'
 import { useRequiredSession } from '@/features/auth/SessionContext'
 import { getProfile, upsertProfile, goalKcal } from '@/lib/api/profile'
 import type { UserProfile } from '@/lib/types'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
-import { Separator } from '@/components/ui/separator'
 
 const GOALS = [
-  { value: 'lose_0.25', label: 'Lose 0.25 kg/week (mild deficit)' },
-  { value: 'lose_0.5',  label: 'Lose 0.5 kg/week (moderate deficit)' },
-  { value: 'lose_0.75', label: 'Lose 0.75 kg/week (aggressive deficit)' },
+  { value: 'lose_0.25', label: 'Lose 0.25 kg/week' },
+  { value: 'lose_0.5',  label: 'Lose 0.5 kg/week' },
+  { value: 'lose_0.75', label: 'Lose 0.75 kg/week' },
   { value: 'maintain',  label: 'Maintain weight' },
-  { value: 'gain_0.25', label: 'Gain 0.25 kg/week (lean bulk)' },
-  { value: 'gain_0.5',  label: 'Gain 0.5 kg/week (bulk)' },
+  { value: 'gain_0.25', label: 'Gain 0.25 kg/week' },
+  { value: 'gain_0.5',  label: 'Gain 0.5 kg/week' },
 ]
 const PREFS = ['Vegetarian', 'Non-Vegetarian', 'Eggetarian', 'Vegan', 'Jain']
 const ACTIVITY_LEVELS = [
-  { value: 'sedentary', label: 'Sedentary (desk job, little exercise)' },
-  { value: 'light', label: 'Light (1–3 days/week exercise)' },
-  { value: 'moderate', label: 'Moderate (3–5 days/week exercise)' },
-  { value: 'active', label: 'Active (6–7 days/week exercise)' },
-  { value: 'very_active', label: 'Very active (physical job + exercise)' },
+  { value: 'sedentary', label: 'Sedentary' },
+  { value: 'light', label: 'Light (1–3×/week)' },
+  { value: 'moderate', label: 'Moderate (3–5×/week)' },
+  { value: 'active', label: 'Active (6–7×/week)' },
+  { value: 'very_active', label: 'Very active' },
 ]
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <label className="text-xs font-medium text-muted-foreground block mb-1.5">{children}</label>
+}
+
+function TextInput({
+  id, value, onChange, placeholder, type = 'text', min, max, step,
+}: {
+  id?: string; value: string; onChange: (v: string) => void
+  placeholder?: string; type?: string; min?: string; max?: string; step?: string
+}) {
+  return (
+    <input
+      id={id}
+      type={type}
+      min={min}
+      max={max}
+      step={step}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full h-10 rounded-xl border border-border bg-white px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+    />
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div
+      className="bg-white rounded-xl p-4 space-y-4"
+      style={{ border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
+    >
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      {children}
+    </div>
+  )
+}
 
 export default function NutritionSettingsPage() {
   const session = useRequiredSession()
@@ -60,7 +92,6 @@ export default function NutritionSettingsPage() {
     }).finally(() => setLoading(false))
   }, [])
 
-  // Compute TDEE preview
   const tdeePreview = (() => {
     const a = parseInt(age), w = parseFloat(weight), h = parseFloat(height)
     if (!a || !w || !h) return null
@@ -99,92 +130,100 @@ export default function NutritionSettingsPage() {
   if (loading) return <div className="flex justify-center py-20"><Spinner /></div>
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-lg mx-auto px-4 pt-5 pb-6 space-y-4">
+      {/* Back header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild className="h-8 w-8 shrink-0">
-          <Link to="/nutrition"><ArrowLeft className="h-4 w-4" /></Link>
-        </Button>
-        <h1 className="text-xl font-semibold">Nutrition Profile</h1>
+        <Link
+          to="/challenges"
+          className="w-9 h-9 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+        <p className="text-sm font-semibold text-foreground">Profile & Goals</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base">Goals & Preferences</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Goal</Label>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Section title="Goals & Preferences">
+          <div className="space-y-3">
+            <div>
+              <FieldLabel>Goal</FieldLabel>
               <Select value={goal} onValueChange={setGoal}>
                 <SelectTrigger><SelectValue placeholder="Select goal…" /></SelectTrigger>
                 <SelectContent>{GOALS.map(g => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Dietary preference</Label>
+            <div>
+              <FieldLabel>Dietary preference</FieldLabel>
               <Select value={dietPref} onValueChange={setDietPref}>
                 <SelectTrigger><SelectValue placeholder="Select preference…" /></SelectTrigger>
                 <SelectContent>{PREFS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="allergies">Food allergies <span className="text-muted-foreground text-xs">(comma-separated)</span></Label>
-              <Input id="allergies" value={allergies} onChange={e => setAllergies(e.target.value)} placeholder="e.g. peanuts, gluten" />
+            <div>
+              <FieldLabel>Food allergies <span className="font-normal">(comma-separated)</span></FieldLabel>
+              <TextInput value={allergies} onChange={setAllergies} placeholder="e.g. peanuts, gluten" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="dislikes">Disliked foods <span className="text-muted-foreground text-xs">(comma-separated)</span></Label>
-              <Input id="dislikes" value={dislikes} onChange={e => setDislikes(e.target.value)} placeholder="e.g. mushrooms, olives" />
+            <div>
+              <FieldLabel>Disliked foods <span className="font-normal">(comma-separated)</span></FieldLabel>
+              <TextInput value={dislikes} onChange={setDislikes} placeholder="e.g. mushrooms, olives" />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </Section>
 
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base">Body & Activity</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
+        <Section title="Body & Activity">
+          <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="age">Age</Label>
-                <Input id="age" type="number" min="10" max="120" value={age} onChange={e => setAge(e.target.value)} placeholder="yrs" />
+              <div>
+                <FieldLabel>Age</FieldLabel>
+                <TextInput type="number" min="10" max="120" value={age} onChange={setAge} placeholder="yrs" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="weight">Weight (kg)</Label>
-                <Input id="weight" type="number" min="20" step="0.1" value={weight} onChange={e => setWeight(e.target.value)} placeholder="kg" />
+              <div>
+                <FieldLabel>Weight (kg)</FieldLabel>
+                <TextInput type="number" min="20" step="0.1" value={weight} onChange={setWeight} placeholder="kg" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="height">Height (cm)</Label>
-                <Input id="height" type="number" min="100" max="250" value={height} onChange={e => setHeight(e.target.value)} placeholder="cm" />
+              <div>
+                <FieldLabel>Height (cm)</FieldLabel>
+                <TextInput type="number" min="100" max="250" value={height} onChange={setHeight} placeholder="cm" />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Activity level</Label>
+            <div>
+              <FieldLabel>Activity level</FieldLabel>
               <Select value={activity} onValueChange={setActivity}>
                 <SelectTrigger><SelectValue placeholder="Select level…" /></SelectTrigger>
-                <SelectContent>{ACTIVITY_LEVELS.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {ACTIVITY_LEVELS.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
+                </SelectContent>
               </Select>
             </div>
 
             {tdeePreview && (
-              <>
-                <Separator />
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Estimated TDEE</p>
-                    <p className="text-xl font-semibold">{tdeePreview.tdee} kcal</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Daily goal ({GOALS.find(g => g.value === goal)?.label ?? 'Maintain weight'})</p>
-                    <p className="text-xl font-semibold">{tdeePreview.kcalGoal} kcal</p>
-                  </div>
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="bg-[#F7F7FB] rounded-xl p-3 text-center">
+                  <p className="text-[10px] font-medium text-muted-foreground mb-1">Est. TDEE</p>
+                  <p className="text-xl font-bold text-foreground">{tdeePreview.tdee}</p>
+                  <p className="text-[10px] text-muted-foreground">kcal/day</p>
                 </div>
-              </>
+                <div className="bg-secondary rounded-xl p-3 text-center">
+                  <p className="text-[10px] font-medium text-primary/70 mb-1">Daily Goal</p>
+                  <p className="text-xl font-bold text-primary">{tdeePreview.kcalGoal}</p>
+                  <p className="text-[10px] text-primary/60">kcal/day</p>
+                </div>
+              </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </Section>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p className="text-sm text-destructive px-1">{error}</p>}
 
-        <Button type="submit" className="w-full" disabled={saving}>
-          {saving ? <Spinner className="mr-2 h-4 w-4" /> : null}
-          {saved ? 'Saved!' : 'Save profile'}
-        </Button>
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 min-h-[44px]"
+        >
+          {saving && <Spinner className="h-4 w-4" />}
+          {saved ? '✓ Saved!' : 'Save profile'}
+        </button>
       </form>
     </div>
   )

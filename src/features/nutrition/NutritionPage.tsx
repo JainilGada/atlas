@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Settings, CalendarDays } from 'lucide-react'
+import { CalendarDays } from 'lucide-react'
 import { useRequiredSession } from '@/features/auth/SessionContext'
 import { getOrCreateDayLog, listFoodItems, updateDayLog, stepsToKcal, strengthToKcal, buildFoodTree, totalSlotKcal } from '@/lib/api/nutrition'
 import { getProfile, goalKcal } from '@/lib/api/profile'
 import type { DayLog, FoodItem, MealSlot, UserProfile } from '@/lib/types'
 import { Spinner } from '@/components/ui/spinner'
-import { Button } from '@/components/ui/button'
 import { SlotCard } from './components/SlotCard'
 import { DailySummary } from './components/DailySummary'
 import { ActivityPanel } from './components/ActivityPanel'
@@ -103,11 +101,6 @@ export default function NutritionPage() {
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-foreground">Nutrition</p>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link to="/settings/nutrition" aria-label="Nutrition settings">
-              <Settings className="h-4 w-4" />
-            </Link>
-          </Button>
           <label className="flex items-center gap-1.5 text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
             <CalendarDays className="h-4 w-4 shrink-0" />
             <input
