@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Footprints, Droplets, Dumbbell } from 'lucide-react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { updateDayLog, stepsToKcal, strengthToKcal } from '@/lib/api/nutrition'
 import type { DayLog } from '@/lib/types'
 import type { SupabaseClient } from '@/lib/supabase'
@@ -118,16 +117,16 @@ export function ActivityPanel({ dayLog, db, onBurnedChange }: ActivityPanelProps
                 placeholder="min"
               />
             </div>
-            <Select value={intensity} onValueChange={v => { setIntensity(v); save({ strength_intensity: v }) }}>
-              <SelectTrigger className="flex-1 h-10 text-sm">
-                <SelectValue placeholder="Intensity…" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="moderate">Moderate</SelectItem>
-                <SelectItem value="heavy">Heavy</SelectItem>
-              </SelectContent>
-            </Select>
+            <select
+              value={intensity}
+              onChange={e => { setIntensity(e.target.value); save({ strength_intensity: e.target.value || null, strength_duration_min: parseInt(duration) || null }) }}
+              className="flex-1 h-10 rounded-lg border border-border bg-white px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+            >
+              <option value="">Intensity…</option>
+              <option value="light">Light</option>
+              <option value="moderate">Moderate</option>
+              <option value="heavy">Heavy</option>
+            </select>
           </div>
           {strengthKcal > 0 && (
             <p className="text-[11px] text-muted-foreground">≈ {strengthKcal} kcal</p>

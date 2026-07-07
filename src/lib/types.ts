@@ -135,6 +135,49 @@ export interface FoodNode extends FoodItem {
   children: FoodNode[]
 }
 
+export type WorkoutCategory =
+  | 'running' | 'cycling' | 'swimming' | 'walking'
+  | 'hiit' | 'strength' | 'yoga' | 'other'
+
+export const WORKOUT_CATEGORY_LABELS: Record<WorkoutCategory, string> = {
+  running: 'Running',
+  cycling: 'Cycling',
+  swimming: 'Swimming',
+  walking: 'Walking',
+  hiit: 'HIIT',
+  strength: 'Strength',
+  yoga: 'Yoga',
+  other: 'Other',
+}
+
+// kcal per minute by category (approximate MET × 3.5 × 70kg / 200)
+export const WORKOUT_KCAL_PER_MIN: Record<WorkoutCategory, number> = {
+  running: 10,
+  cycling: 7,
+  swimming: 8,
+  walking: 4,
+  hiit: 12,
+  strength: 5,
+  yoga: 3,
+  other: 6,
+}
+
+export interface WorkoutExercise {
+  id: string
+  day_log_id: string
+  user_id: string
+  name: string
+  category: WorkoutCategory
+  sets: number | null
+  reps: number | null
+  duration_min: number | null
+  kcal_burned: number | null
+  sort_order: number
+  created_at: string
+  deleted_at: string | null
+  deleted_by: string | null
+}
+
 export interface UserProfile {
   user_id: string
   goal: string | null

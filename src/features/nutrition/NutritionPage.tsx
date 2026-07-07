@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { SlotCard } from './components/SlotCard'
 import { DailySummary } from './components/DailySummary'
 import { ActivityPanel } from './components/ActivityPanel'
+import { WorkoutPanel } from './components/WorkoutPanel'
 import { FeedbackPanel } from './components/FeedbackPanel'
 
 const SLOTS: MealSlot[] = ['breakfast', 'morning_snack', 'lunch', 'evening_snack', 'dinner']
@@ -23,8 +24,11 @@ export default function NutritionPage() {
   const [dayLog, setDayLog] = useState<DayLog | null>(null)
   const [items, setItems] = useState<FoodItem[]>([])
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [burnedKcal, setBurnedKcal] = useState(0)
+  const [activityKcal, setActivityKcal] = useState(0)
+  const [workoutKcal, setWorkoutKcal] = useState(0)
   const [showLateNight, setShowLateNight] = useState(false)
+
+  const burnedKcal = activityKcal + workoutKcal
 
   useEffect(() => {
     let cancelled = false
@@ -51,11 +55,11 @@ export default function NutritionPage() {
         setItems(fi)
         setProfile(prof)
 
-        // Recompute burned
+        // Recompute activity burned from day_log fields
         const s = log.steps ?? 0
         const d = log.strength_duration_min ?? 0
         const intensity = log.strength_intensity ?? ''
-        setBurnedKcal(stepsToKcal(s) + (d && intensity ? strengthToKcal(d, intensity) : 0))
+        setActivityKcal(stepsToKcal(s) + (d && intensity ? strengthToKcal(d, intensity) : 0))
 
         // Show late night if already has items there
         if (fi.some(f => f.slot === 'late_night')) setShowLateNight(true)
@@ -67,7 +71,7 @@ export default function NutritionPage() {
     return () => { cancelled = true }
   }, [date])
 
-  // Recompute consumed_kcal and sync to DB when items change
+  // Recompute consumed_kcal and sync to DB when items or burned change
   useEffect(() => {
     if (!dayLog) return
     const tree = buildFoodTree(items)
@@ -83,7 +87,6 @@ export default function NutritionPage() {
   }, [items, burnedKcal])
 
   function handleItemsChange(_slot: MealSlot, updated: FoodItem[]) {
-    // updated already contains all items (slot replaced in parent)
     setItems(updated)
   }
 
@@ -141,14 +144,19 @@ export default function NutritionPage() {
         </button>
       )}
 
-      {/* Activity */}
+      {/* Activity (steps, water, strength) */}
       <ActivityPanel
         dayLog={dayLog}
         db={session.db}
-        onBurnedChange={burned => {
-          setBurnedKcal(burned)
-          setDayLog(prev => prev ? { ...prev, burned_kcal: burned } : prev)
-        }}
+        onBurnedChange={setActivityKcal}
+      />
+
+      {/* Workout log */}
+      <WorkoutPanel
+        dayLogId={dayLog.id}
+        userId={session.userId}
+        db={session.db}
+        onKcalChange={setWorkoutKcal}
       />
 
       {/* AI Feedback */}

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, MessageSquare, CheckCircle2, Circle } from 'lucide-react'
-import { Textarea } from '@/components/ui/textarea'
 import { YesNoInput } from './inputs/YesNoInput'
 import { ShortTextInput } from './inputs/ShortTextInput'
 import { LongTextInput } from './inputs/LongTextInput'
@@ -198,13 +197,13 @@ export function TaskNode({
 
             {commentOpen && (
               <div className="space-y-1.5">
-                <Textarea
+                <textarea
                   value={comment}
                   onChange={e => setComment(e.target.value)}
                   onBlur={saveComment}
                   rows={2}
                   placeholder="Comment…"
-                  className="text-xs resize-none"
+                  className="w-full text-xs text-foreground bg-white border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground resize-none"
                 />
               </div>
             )}

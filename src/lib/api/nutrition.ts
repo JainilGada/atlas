@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@/lib/supabase'
-import type { DayLog, FoodItem, FoodNode, MealSlot } from '@/lib/types'
+import type { DayLog, FoodItem, FoodNode, MealSlot, WorkoutExercise, WorkoutCategory } from '@/lib/types'
+import { WORKOUT_KCAL_PER_MIN } from '@/lib/types'
 
 // ── Day logs ─────────────────────────────────────────────────────────────────
 
@@ -131,4 +132,50 @@ export function stepsToKcal(steps: number): number {
 export function strengthToKcal(durationMin: number, intensity: string): number {
   const rate: Record<string, number> = { light: 4, moderate: 7, heavy: 10 }
   return Math.round(durationMin * (rate[intensity] ?? 6))
+}
+
+/** Workout exercise → kcal burned from duration + category */
+export function exerciseToKcal(category: WorkoutCategory, durationMin: number): number {
+  return Math.round((WORKOUT_KCAL_PER_MIN[category] ?? 6) * durationMin)
+}
+
+// ── Workout exercises ─────────────────────────────────────────────────────────
+
+export async function listWorkoutExercises(
+  db: SupabaseClient,
+  dayLogId: string,
+): Promise<WorkoutExercise[]> {
+  const { data, error } = await db
+    .from('workout_exercises')
+    .select('*')
+    .eq('day_log_id', dayLogId)
+    .is('deleted_at', null)
+    .order('sort_order')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function createWorkoutExercise(
+  db: SupabaseClient,
+  payload: Pick<WorkoutExercise, 'day_log_id' | 'user_id' | 'name' | 'category' | 'sets' | 'reps' | 'duration_min' | 'kcal_burned' | 'sort_order'>,
+): Promise<WorkoutExercise> {
+  const { data, error } = await db
+    .from('workout_exercises')
+    .insert(payload)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function softDeleteWorkoutExercise(
+  db: SupabaseClient,
+  id: string,
+  userId: string,
+): Promise<void> {
+  const { error } = await db
+    .from('workout_exercises')
+    .update({ deleted_at: new Date().toISOString(), deleted_by: userId })
+    .eq('id', id)
+  if (error) throw error
 }

@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react'
 import { Paperclip, X, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import type { SupabaseClient } from '@/lib/supabase'
 import type { FileRef } from '@/lib/types'
 
@@ -95,17 +94,15 @@ export function FileInput({ files, multiple, accept, db, userId, date, taskId, o
       </div>
 
       {(!files.length || multiple) && (
-        <Button
+        <button
           type="button"
-          variant="outline"
-          size="sm"
-          className="h-7 text-xs"
           disabled={disabled || uploading}
           onClick={() => inputRef.current?.click()}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-primary bg-secondary px-3 py-1.5 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all disabled:opacity-50"
         >
-          {uploading ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Paperclip className="h-3.5 w-3.5 mr-1" />}
+          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Paperclip className="h-3.5 w-3.5" />}
           {uploading ? 'Uploading…' : 'Attach file'}
-        </Button>
+        </button>
       )}
 
       <input
