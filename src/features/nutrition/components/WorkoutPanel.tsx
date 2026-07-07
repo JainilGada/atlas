@@ -41,14 +41,14 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange, onWorkoutsCha
       setExercises(exs)
       onWorkoutsChange?.(exs)
     }).catch(console.error)
-  }, [dayLogId])
+  }, [dayLogId, db]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalKcal = exercises.reduce((s, e) => s + (e.kcal_burned ?? 0), 0)
 
   useEffect(() => {
     onKcalChange(totalKcal)
     onWorkoutsChange?.(exercises)
-  }, [exercises])
+  }, [exercises]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleAdd() {
     if (!form.name.trim()) return

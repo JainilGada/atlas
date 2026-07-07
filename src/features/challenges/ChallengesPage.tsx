@@ -162,17 +162,29 @@ function ChallengeCard({
   const challengePct = totalDays > 0 ? Math.min(100, Math.round((currentDay / totalDays) * 100)) : 0
   const isArchived = c.status === 'archived'
   const isPaused = c.status === 'paused'
+  const isCompleted = totalDays > 0 && currentDay > totalDays && !isArchived
+
+  const barColor = isPaused ? '#F59E0B' : isCompleted ? '#22C55E' : '#6C63FF'
+  const trackColor = isCompleted ? '#DCFCE7' : '#EDE9FF'
 
   return (
     <div
       className={`bg-white rounded-xl p-4 transition-all ${isArchived ? 'opacity-60' : ''}`}
-      style={{ border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
+      style={{
+        border: `1px solid ${isCompleted ? '#22C55E' : '#E5E7EB'}`,
+        boxShadow: isCompleted ? '0 2px 8px rgba(34,197,94,0.12)' : '0 1px 3px rgba(0,0,0,0.08)',
+      }}
     >
       <div className="flex items-start gap-2 mb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-0.5">
             <span className="font-bold text-[15px] text-foreground truncate">{c.name}</span>
-            {isPaused && (
+            {isCompleted && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                ✓ Completed
+              </span>
+            )}
+            {isPaused && !isCompleted && (
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
                 Paused
               </span>
@@ -185,8 +197,14 @@ function ChallengeCard({
 
         <div className="flex items-center gap-1 shrink-0">
           {totalDays > 0 && !isArchived && (
-            <span className="text-xs font-semibold text-primary bg-secondary px-2.5 py-1 rounded-full whitespace-nowrap">
-              Day {currentDay}/{totalDays}
+            <span
+              className="text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap"
+              style={{
+                color: isCompleted ? '#16A34A' : 'hsl(var(--primary))',
+                backgroundColor: isCompleted ? '#DCFCE7' : 'hsl(var(--secondary))',
+              }}
+            >
+              {isCompleted ? `${totalDays}/${totalDays} days` : `Day ${currentDay}/${totalDays}`}
             </span>
           )}
           {!isArchived && (
@@ -237,13 +255,15 @@ function ChallengeCard({
       {/* Progress bar */}
       {totalDays > 0 && (
         <div className="space-y-1">
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#EDE9FF' }}>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: trackColor }}>
             <div
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${challengePct}%`, backgroundColor: isPaused ? '#F59E0B' : '#6C63FF' }}
+              style={{ width: `${challengePct}%`, backgroundColor: barColor }}
             />
           </div>
-          <p className="text-[11px] text-muted-foreground">{challengePct}% through challenge</p>
+          <p className="text-[11px] text-muted-foreground">
+            {isCompleted ? '🏆 Challenge complete!' : `${challengePct}% through challenge`}
+          </p>
         </div>
       )}
     </div>
