@@ -105,6 +105,7 @@ function MilestoneModal({ milestone, onClose }: { milestone: Milestone; onClose:
   )
 }
 
+import { Link } from 'react-router-dom'
 import { TaskNode } from './TaskNode'
 import { getOrCreateCheckin, getTaskEntries } from '@/lib/api/checkins'
 import { listTasks, buildTree } from '@/lib/api/tasks'
@@ -273,9 +274,9 @@ export function CheckinCard({ challenge, date, userId, db }: CheckinCardProps) {
         ) : tree.length === 0 ? (
           <p className="text-sm text-muted-foreground px-4 pb-4 border-t pt-3">
             No tasks yet.{' '}
-            <a href={`/challenges/${challenge.id}/setup`} className="text-primary underline">
+            <Link to={`/challenges/${challenge.id}/setup`} className="text-primary underline">
               Set them up →
-            </a>
+            </Link>
           </p>
         ) : (
           <div className="border-t divide-y divide-[#F3F4F6]">
