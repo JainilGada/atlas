@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { Spinner } from '@/components/ui/spinner'
 
 const CONFETTI_COLORS = ['#6C63FF', '#22C55E', '#F59E0B', '#EF4444', '#3B82F6', '#EC4899']
@@ -73,10 +73,18 @@ function getMilestone(currentDay: number, totalDays: number): Milestone | null {
 }
 
 function MilestoneModal({ milestone, onClose }: { milestone: Milestone; onClose: () => void }) {
+  // Prevent body scroll while open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
+  const isFinal = milestone.title === 'Challenge Complete!'
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+      style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
       onClick={onClose}
     >
       <div
@@ -90,7 +98,7 @@ function MilestoneModal({ milestone, onClose }: { milestone: Milestone; onClose:
           onClick={onClose}
           className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-[0.97] transition-all"
         >
-          Keep going 🚀
+          {isFinal ? '🎉 Celebrate!' : 'Keep going 🚀'}
         </button>
       </div>
     </div>

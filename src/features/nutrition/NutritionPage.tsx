@@ -3,7 +3,7 @@ import { CalendarDays } from 'lucide-react'
 import { useRequiredSession } from '@/features/auth/SessionContext'
 import { getOrCreateDayLog, listFoodItems, updateDayLog, stepsToKcal, strengthToKcal, buildFoodTree, totalSlotKcal } from '@/lib/api/nutrition'
 import { getProfile, goalKcal } from '@/lib/api/profile'
-import type { DayLog, FoodItem, MealSlot, UserProfile } from '@/lib/types'
+import type { DayLog, FoodItem, MealSlot, UserProfile, WorkoutExercise } from '@/lib/types'
 import { Spinner } from '@/components/ui/spinner'
 import { SlotCard } from './components/SlotCard'
 import { DailySummary } from './components/DailySummary'
@@ -26,6 +26,7 @@ export default function NutritionPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [activityKcal, setActivityKcal] = useState(0)
   const [workoutKcal, setWorkoutKcal] = useState(0)
+  const [workouts, setWorkouts] = useState<WorkoutExercise[]>([])
   const [showLateNight, setShowLateNight] = useState(false)
 
   const burnedKcal = activityKcal + workoutKcal
@@ -157,6 +158,7 @@ export default function NutritionPage() {
         userId={session.userId}
         db={session.db}
         onKcalChange={setWorkoutKcal}
+        onWorkoutsChange={setWorkouts}
       />
 
       {/* AI Feedback */}
@@ -165,6 +167,7 @@ export default function NutritionPage() {
         consumedKcal={consumedKcal}
         burnedKcal={burnedKcal}
         allItems={items}
+        workouts={workouts}
         profile={profile}
         db={session.db}
       />

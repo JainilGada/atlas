@@ -11,6 +11,7 @@ interface WorkoutPanelProps {
   userId: string
   db: SupabaseClient
   onKcalChange: (kcal: number) => void
+  onWorkoutsChange?: (workouts: WorkoutExercise[]) => void
 }
 
 const CATEGORIES = Object.keys(WORKOUT_CATEGORY_LABELS) as WorkoutCategory[]
@@ -25,7 +26,7 @@ interface ScannedExercise {
   selected: boolean
 }
 
-export function WorkoutPanel({ dayLogId, userId, db, onKcalChange }: WorkoutPanelProps) {
+export function WorkoutPanel({ dayLogId, userId, db, onKcalChange, onWorkoutsChange }: WorkoutPanelProps) {
   const [exercises, setExercises] = useState<WorkoutExercise[]>([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -36,14 +37,18 @@ export function WorkoutPanel({ dayLogId, userId, db, onKcalChange }: WorkoutPane
   const photoRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    listWorkoutExercises(db, dayLogId).then(setExercises).catch(console.error)
+    listWorkoutExercises(db, dayLogId).then(exs => {
+      setExercises(exs)
+      onWorkoutsChange?.(exs)
+    }).catch(console.error)
   }, [dayLogId])
 
   const totalKcal = exercises.reduce((s, e) => s + (e.kcal_burned ?? 0), 0)
 
   useEffect(() => {
     onKcalChange(totalKcal)
-  }, [totalKcal])
+    onWorkoutsChange?.(exercises)
+  }, [exercises])
 
   async function handleAdd() {
     if (!form.name.trim()) return

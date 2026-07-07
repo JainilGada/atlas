@@ -28,13 +28,24 @@ User profile:
       `${m.slot} (${m.total_kcal} kcal):\n${m.items.map((i: {name: string; kcal: number}) => `  - ${i.name}: ${i.kcal} kcal`).join('\n')}`
     ).join('\n\n') ?? 'No meals logged'
 
-    const prompt = `You are a friendly, knowledgeable nutrition coach. Provide personalised end-of-day feedback based on the user's food intake.
+    const workoutSection = dayLog.workouts?.length
+      ? dayLog.workouts.map((w: { name: string; category: string; sets?: number; reps?: number; duration_min?: number; kcal_burned?: number }) => {
+          const detail = [
+            w.duration_min ? `${w.duration_min} min` : '',
+            w.sets ? `${w.sets}×${w.reps ?? '?'} sets` : '',
+            w.kcal_burned ? `≈${w.kcal_burned} kcal` : '',
+          ].filter(Boolean).join(', ')
+          return `  - ${w.name} (${w.category})${detail ? ': ' + detail : ''}`
+        }).join('\n')
+      : 'No workouts logged'
+
+    const prompt = `You are a friendly, knowledgeable nutrition and fitness coach. Provide personalised end-of-day feedback based on the user's food intake and exercise.
 ${profileSection}
 
-Today's intake summary:
+Today's summary:
 - Date: ${dayLog.date}
 - Calories consumed: ${dayLog.consumed_kcal ?? 0} kcal
-- Calories burned (activity): ${dayLog.burned_kcal ?? 0} kcal
+- Calories burned (total): ${dayLog.burned_kcal ?? 0} kcal
 - Net calories: ${dayLog.net_kcal ?? 0} kcal
 - Goal: ${dayLog.goal_kcal ?? 'not set'} kcal
 - Balance: ${dayLog.balance != null ? (dayLog.balance > 0 ? '+' : '') + dayLog.balance + ' kcal' : 'unknown'}
@@ -42,16 +53,19 @@ Today's intake summary:
 - Water: ${dayLog.water_litres ?? 'not logged'} litres
 - Strength training: ${dayLog.strength_duration_min ? `${dayLog.strength_duration_min} min (${dayLog.strength_intensity})` : 'none'}
 
+Workouts:
+${workoutSection}
+
 Meals:
 ${mealSection}
 
 Write concise, warm, actionable feedback (150-250 words). Structure it as:
-1. A brief overall assessment (1-2 sentences)
-2. What went well today (1-2 bullet points)
+1. A brief overall assessment of nutrition and activity (1-2 sentences)
+2. What went well today (1-2 bullet points, covering food and/or workouts)
 3. One or two specific, practical suggestions for tomorrow
 4. A short motivating closing line
 
-IMPORTANT: Respect the user's dietary preference — never suggest foods that conflict with it. Never mention allergens. Keep suggestions realistic and encouraging, not preachy.`
+IMPORTANT: Respect the user's dietary preference — never suggest foods that conflict with it. Never mention allergens. If workouts were logged, acknowledge the effort briefly. Keep suggestions realistic and encouraging, not preachy.`
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',

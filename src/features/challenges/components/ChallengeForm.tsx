@@ -32,6 +32,13 @@ export function ChallengeForm({ open, onOpenChange, initial, onSubmit }: Challen
     setError(null)
   }, [initial, open])
 
+  // Prevent body scroll while open
+  useEffect(() => {
+    if (open) document.body.style.overflow = 'hidden'
+    else document.body.style.overflow = ''
+    return () => { document.body.style.overflow = '' }
+  }, [open])
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)

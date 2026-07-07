@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
 import { updateDayLog } from '@/lib/api/nutrition'
-import type { DayLog, UserProfile, FoodItem, MealSlot } from '@/lib/types'
+import type { DayLog, UserProfile, FoodItem, MealSlot, WorkoutExercise } from '@/lib/types'
 import type { SupabaseClient } from '@/lib/supabase'
 
 interface FeedbackPanelProps {
@@ -10,6 +10,7 @@ interface FeedbackPanelProps {
   consumedKcal: number
   burnedKcal: number
   allItems: FoodItem[]
+  workouts?: WorkoutExercise[]
   profile: UserProfile | null
   db: SupabaseClient
 }
@@ -19,7 +20,7 @@ const SLOT_LABELS: Record<MealSlot, string> = {
   evening_snack: 'Evening Snack', dinner: 'Dinner', late_night: 'Late Night',
 }
 
-export function FeedbackPanel({ dayLog, consumedKcal, burnedKcal, allItems, profile, db }: FeedbackPanelProps) {
+export function FeedbackPanel({ dayLog, consumedKcal, burnedKcal, allItems, workouts, profile, db }: FeedbackPanelProps) {
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState(dayLog.ai_feedback ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -39,6 +40,15 @@ export function FeedbackPanel({ dayLog, consumedKcal, burnedKcal, allItems, prof
         }
       }).filter(Boolean)
 
+      const workoutSummary = workouts?.map(w => ({
+        name: w.name,
+        category: w.category,
+        sets: w.sets,
+        reps: w.reps,
+        duration_min: w.duration_min,
+        kcal_burned: w.kcal_burned,
+      })) ?? []
+
       const { data, error: fnErr } = await db.functions.invoke('ai-feedback', {
         body: {
           dayLog: {
@@ -53,6 +63,7 @@ export function FeedbackPanel({ dayLog, consumedKcal, burnedKcal, allItems, prof
             strength_duration_min: dayLog.strength_duration_min,
             strength_intensity: dayLog.strength_intensity,
             meals,
+            workouts: workoutSummary,
           },
           profile,
         },
