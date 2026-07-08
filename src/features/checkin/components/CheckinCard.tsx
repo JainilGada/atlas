@@ -46,8 +46,6 @@ function Confetti({ active }: { active: boolean }) {
   )
 }
 
-const MILESTONE_DAYS = [7, 30, 75]
-
 interface Milestone {
   day: number
   emoji: string
